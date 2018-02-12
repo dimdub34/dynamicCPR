@@ -1,0 +1,1 @@
+import dynamicCPRPart  # for sqlalchemy
