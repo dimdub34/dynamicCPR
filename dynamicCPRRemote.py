@@ -10,6 +10,8 @@ from client.cltgui.cltguidialogs import GuiRecapitulatif
 import dynamicCPRParams as pms
 from dynamicCPRGui import GuiDecision
 import dynamicCPRTexts as texts_DYNCPR
+from threading import Timer
+from datetime import datetime
 
 
 logger = logging.getLogger("le2m")
@@ -44,7 +46,6 @@ class PlotData():
     @curve.setter
     def curve(self, val):
         self._curve = val
-
 
 
 class RemoteDYNCPR(IRemote):
@@ -82,6 +83,7 @@ class RemoteDYNCPR(IRemote):
             self.histo_vars = texts_DYNCPR.get_histo_vars()
             self.histo.append(texts_DYNCPR.get_histo_head())
 
+    @defer.inlineCallbacks
     def remote_display_decision(self):
         """
         Display the decision screen
@@ -89,20 +91,29 @@ class RemoteDYNCPR(IRemote):
         """
         logger.info(u"{} Decision".format(self._le2mclt.uid))
         if self._le2mclt.simulation:
-            decision = \
-                random.randrange(
-                    pms.DECISION_MIN,
-                    pms.DECISION_MAX + pms.DECISION_STEP,
-                    pms.DECISION_STEP)
-            logger.info(u"{} Send back {}".format(self._le2mclt.uid, decision))
-            return decision
+            if self.currentperiod == 0:
+                decision = \
+                    random.randrange(
+                        pms.DECISION_MIN,
+                        pms.DECISION_MAX + pms.DECISION_STEP,
+                        pms.DECISION_STEP)
+                logger.info(u"{} Send back {}".format(self._le2mclt.uid, decision))
+                defer.returnValue(decision)
+            else:
+                start = datetime.now()
+                end = datetime.now()
+                while (end - start).total_seconds() >= pms.TIME_DURATION.total_seconds():
+                    if random.random() <= 0.10:
+                        pass # todo
+
+
         else: 
             defered = defer.Deferred()
             ecran_decision = GuiDecision(
                 defered, self._le2mclt.automatique,
                 self._le2mclt.screen, self.currentperiod, self.histo)
             ecran_decision.show()
-            return defered
+            defer.returnValue(defered)
 
     def remote_update_extractions(self, new_extractions):
         self.extraction_group = 0

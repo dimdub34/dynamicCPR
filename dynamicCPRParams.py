@@ -29,11 +29,11 @@ DECISION_MAX = 100
 DECISION_STEP = 1
 
 
-TIME_DURATION = datetime.time(0, 2, 0)  # hours, minutes, seconds
-CONTIUOUS = 0
+TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)  # hours, minutes, seconds
+CONTINUOUS = 0
 DISCRETE = 1
 IMPULSORY = 2
-DYNAMIC_TYPE = CONTIUOUS
+DYNAMIC_TYPE = CONTINUOUS
 CONTIUOUS_REFRESH = 1000  # 1 second
 DISCRETE_DECISION_TIME = datetime.time(0, 1, 0)
 

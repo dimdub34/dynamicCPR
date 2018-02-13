@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime
 from twisted.internet import defer
+from twisted.spread import pb  # because some functions can be called remotely
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
 from server.servbase import Base
@@ -14,7 +15,7 @@ import dynamicCPRParams as pms
 logger = logging.getLogger("le2m")
 
 
-class PartieDYNCPR(Partie):
+class PartieDYNCPR(Partie, pb.Referenceable):
     __tablename__ = "partie_dynamicCPR"
     __mapper_args__ = {'polymorphic_identity': 'dynamicCPR'}
     partie_id = Column(Integer, ForeignKey('parties.id'), primary_key=True)
@@ -121,12 +122,20 @@ class PartieDYNCPR(Partie):
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
 
 
+    @defer.inlineCallbacks
+    def remote_new_extraction(self, extraction):
+        self.current_extraction = ExtractionsDYNCRP()
+        self.current_extraction.DYNCRP_extraction = extraction
+        self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
+        self.currentperiod.extractions.append(self.current_extraction)
+
+
+
 class RepetitionsDYNCPR(Base):
     __tablename__ = 'partie_dynamicCPR_repetitions'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    partie_partie_id = Column(
-        Integer,
-        ForeignKey("partie_dynamicCPR.partie_id"))
+    partie_partie_id = Column(Integer, ForeignKey("partie_dynamicCPR.partie_id"))
+    extractions = relationship('ExtractionsDYNCPR')
 
     DYNCPR_period = Column(Integer)
     DYNCPR_period_start_time = Column(DateTime, default=datetime.now())
