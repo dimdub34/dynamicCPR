@@ -1,1 +1,3 @@
-import dynamicCPRPart  # for sqlalchemy
+# for sqlalchemy
+import dynamicCPRPart
+import dynamicCPRGroup
