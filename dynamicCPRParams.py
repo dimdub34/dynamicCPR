@@ -10,11 +10,19 @@ which means that you should ask to the developer ;-)
 
 import datetime
 
-# variables --------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# variables - do not change any value below
+# ------------------------------------------------------------------------------
 BASELINE = 0
 TREATMENTS_NAMES = {BASELINE: "Baseline"}
+CONTINUOUS = 0
+DISCRETE = 1
+IMPULSORY = 2
 
-# parameters -------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# parameters
+# ------------------------------------------------------------------------------
+
 TREATMENT = BASELINE
 TAUX_CONVERSION = 1
 NOMBRE_PERIODES = 2
@@ -28,14 +36,13 @@ DECISION_MIN = 0
 DECISION_MAX = 100
 DECISION_STEP = 1
 
-
-TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)  # hours, minutes, seconds
-CONTINUOUS = 0
-DISCRETE = 1
-IMPULSORY = 2
 DYNAMIC_TYPE = CONTINUOUS
-CONTIUOUS_REFRESH = 1000  # 1 second
-DISCRETE_DECISION_TIME = datetime.time(0, 1, 0)
+# continuous game
+CONTINOUS_TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)
+# refresh of the extractions and resource stock variations
+CONTINUOUS_REFRESH = datetime.timedelta(hours=0, minutes=0, seconds=1)
+# time for the player to take a decision
+DISCRETE_DECISION_TIME = datetime.timedelta(hours=0, minutes=1, seconds=0)
 
 
 
