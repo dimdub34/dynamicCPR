@@ -38,7 +38,11 @@ class PartieDYNCPR(Partie, pb.Referenceable):
     @defer.inlineCallbacks
     def configure(self):
         logger.debug(u"{} Configure".format(self.joueur))
-        yield (self.remote.callRemote("configure", get_module_attributes(pms)))
+        # we send self because some methods are called remotely
+        # we send also the group composition
+        yield (self.remote.callRemote(
+            "configure", get_module_attributes(pms), self,
+            self.joueur.group.players))
         self.joueur.info(u"Ok")
 
     @defer.inlineCallbacks
@@ -140,7 +144,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
-            self.joueur, extraction, self.currentperiod.number())
+            self.joueur, self.current_extraction, self.currentperiod.number())
         yield (self.le2mserv.gestionnaire_experience.run_func(
             self.joueur.group.players_part(), "inform_remote_of_new_extraction"
         ))
@@ -156,7 +160,6 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         yield (self.remote.callRemote(
             "new_extraction", self.joueur.group.current_players_extractions,
             self.joueur.group.current_extraction))
-
 
 
 class RepetitionsDYNCPR(Base):
@@ -196,8 +199,8 @@ class ExtractionsDYNCPR(Base):
     __tablename__ = "partie_dynamicCPR_extractions"
     id = Column(Integer, primary_key=True, autoincrement=True)
     repetitions_id = Column(Integer, ForeignKey("partie_dynamicCPR_repetitions.id"))
-    DYNCRP_extraction = Column(Float)
-    DYNCRP_extraction_time = Column(DateTime, default=datetime.now())
+    DYNCPR_extraction = Column(Float)
+    DYNCPR_extraction_time = Column(DateTime, default=datetime.now())
 
     def __init__(self, extraction):
-        self.DYNCRP_extraction = extraction
+        self.DYNCPR_extraction = extraction

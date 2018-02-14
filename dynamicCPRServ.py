@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import logging
 from collections import OrderedDict
 from twisted.internet import defer
@@ -38,9 +37,9 @@ class Serveur(object):
         screen_conf = DConfigure(self._le2mserv.gestionnaire_graphique.screen)
         if screen_conf.exec_():
             self._le2mserv.gestionnaire_graphique.infoserv(
-                "Traitement: {}".format(pms.TREATMENTS_NAMES.get(pms.TREATMENT)))
+                u"Traitement: {}".format(pms.TREATMENTS_NAMES.get(pms.TREATMENT)))
             self._le2mserv.gestionnaire_graphique.infoserv(
-                "Période d'essai: {}".format("oui" if pms.PERIODE_ESSAI else "non"))
+                u"Période d'essai: {}".format("oui" if pms.PERIODE_ESSAI else "non"))
 
     @defer.inlineCallbacks
     def _demarrer(self):
@@ -73,10 +72,6 @@ class Serveur(object):
                     for j in m:
                         j.group = group
 
-        # set parameters on remotes
-        yield (self._le2mserv.gestionnaire_experience.run_step(
-            le2mtrans(u"Configure"), self._tous, "configure"))
-
         self._current_sequence += 1
 
         # creates parts
@@ -85,6 +80,10 @@ class Serveur(object):
             current_sequence=self._current_sequence))
         self._tous = self._le2mserv.gestionnaire_joueurs.get_players(
             'dynamicCPR')
+
+        # set parameters on remotes (has to be after group formation)
+        yield (self._le2mserv.gestionnaire_experience.run_step(
+            le2mtrans(u"Configure"), self._tous, "configure"))
 
         # ----------------------------------------------------------------------
         # SELECT THE INITIAL EXTRACTION

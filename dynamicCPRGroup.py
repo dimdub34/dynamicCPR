@@ -16,7 +16,7 @@ class DYNCPRGroup(Base):
         self.uid = group_id
         self.DYNCPR_sequence = sequence
         self._players = player_list
-        self._current_players_extractions = {p: 0 for p in self.players}
+        self._current_players_extractions = dict()
         self._current_extraction = None
 
     @property
@@ -25,7 +25,7 @@ class DYNCPRGroup(Base):
         return a copy of the players' list
         :return:
         """
-        return self.players[:]
+        return self._players[:]
 
     def players_part(self):
         """
@@ -45,8 +45,8 @@ class DYNCPRGroup(Base):
         """
         self._current_players_extractions[player] = extraction
         self._current_extraction = DYNCPRGroupExtraction(
-            period, datetime.now(),
-            sum([e for e in self.players_extractions.values()]))
+            period, extraction.DYNCPR_extraction_time,
+            sum([e.DYNCPR_extraction for e in self._current_players_extractions.values()]))
         self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
         self.extractions.append(self._current_extraction)
 
