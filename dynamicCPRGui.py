@@ -58,16 +58,6 @@ class PlotExtraction(FigureCanvas):
         for k, v in self.remote.extractions.items():
             v.curve = self.graph.plot(v.xdata, v.ydata, label=k)
 
-    def update_extractions(self):
-        """
-        ydata has to be set in the remote class
-        :param time:
-        :return:
-        """
-        for k, v in self.remote.extractions.items():
-            v.curve.set_data(v.xdata, v.ydata)
-        self.fig.canvas.draw()
-
 
 class PlotRessource(FigureCanvas):
     """
@@ -107,12 +97,6 @@ class PlotRessource(FigureCanvas):
     def update_resource(self):
         self.resource.curve.set_data(
             self.resource.xdata, self.resource.ydata)
-        self.fig.canvas.draw()
-
-    def update_extraction_group(self):
-        self.extraction_group.curve.set_data(
-            self.extraction_group.xdata,
-            self.extraction_group.ydata)
         self.fig.canvas.draw()
 
 
@@ -180,6 +164,10 @@ class GuiDecision(QtGui.QDialog):
         logger.info(u"Send back {}".format(decision))
         self.accept()
         self._defered.callback(decision)
+
+    def new_extraction(self):
+        self.graphical_zone.plot_extraction.fig.canvas.draw()
+        self.graphical_zone.plot_resource.fig.canvas.draw()
 
 
 class DConfigure(QtGui.QDialog):
