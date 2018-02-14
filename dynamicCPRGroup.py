@@ -1,21 +1,83 @@
 from server.servbase import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
+from datetime import datetime
 
 
-class DYNCPRGroup(object):
+class DYNCPRGroup(Base):
     __tablename__ = "group_dynamicCPR"
-    id = Column(Integer, primary_key=True)
-    players = relationship("partie_dynamicCPR")
+    uid = Column(Integer, primary_key=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"))
+    extractions = relationship("DYNCPRGroupExtraction")
+    DYNCPR_sequence = Column(Integer)
 
-    def __init__(self, group_id, player_list):
-        self.id = group_id
-        self.players = player_list
-        self.players_extractions = {p: 0 for p in self.players}
-        self.current_extraction = 0
+    def __init__(self, le2mserv, group_id, player_list, sequence=0):
+        self.le2mserv = le2mserv
+        self.uid = group_id
+        self.DYNCPR_sequence = sequence
+        self._players = player_list
+        self._current_players_extractions = {p: 0 for p in self.players}
+        self._current_extraction = None
 
-    def set_extraction(self, player, extraction):
-        self.players_extractions[player] = extraction
-        self.current_extraction = sum([e for e in self.players_extractions.values()])
+    @property
+    def players(self):
+        """
+        return a copy of the players' list
+        :return:
+        """
+        return self.players[:]
 
+    def players_part(self):
+        """
+        return the dynamicCPR part of players
+        :return:
+        """
+        return [j.get_part("dynamicCPR") for j in self.players]
+
+    def add_extraction(self, player, extraction, period=None):
+        """
+
+        :param player: the player at the origin of the extraction
+        :param extraction: the amount extracted (Float)
+        :param period: if discret, the period number. If continuous call the
+        method without this arg
+        :return:
+        """
+        self._current_players_extractions[player] = extraction
+        self._current_extraction = DYNCPRGroupExtraction(
+            period, datetime.now(),
+            sum([e for e in self.players_extractions.values()]))
+        self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
+        self.extractions.append(self._current_extraction)
+
+    @property
+    def current_extraction(self):
+        """
+        return a dict
+        :return:
+        """
+        return {
+            "period": self._current_extraction.DYNCPR_period,
+            "time": self._current_extraction.DYNCRP_time,
+            "extraction": self._current_extraction.DYNCPR_group_extraction
+        }
+
+    @property
+    def current_players_extractions(self):
+        return self._current_players_extractions.copy()
+
+
+class DYNCPRGroupExtraction(Base):
+    __tablename__ = "group_dynamicCPR_extractions"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_uid = Column(String, ForeignKey("group_dynamicCPR.uid"))
+
+    DYNCPR_period = Column(Integer, default=None)
+    DYNCPR_time = Column(DateTime, default=None)
+    DYNCPR_group_extraction = Column(Float, default=0)
+
+    def __init__(self, period, time, value):
+        self.DYNCPR_period = period
+        self.DYNCPR_time = time
+        self.DYNCPR_group_extraction = value
 
