@@ -10,8 +10,8 @@ from client.cltgui.cltguidialogs import GuiRecapitulatif
 import dynamicCPRParams as pms
 from dynamicCPRGui import GuiDecision
 import dynamicCPRTexts as texts_DYNCPR
-from threading import Timer
 from datetime import datetime
+from blinker import signal
 
 
 logger = logging.getLogger("le2m")
@@ -47,6 +47,9 @@ class PlotData():
     def curve(self, val):
         self._curve = val
 
+    def update_curve(self):
+        self._curve.set_data(self._xdata, self._ydata)
+
 
 class RemoteDYNCPR(IRemote):
     """
@@ -57,6 +60,11 @@ class RemoteDYNCPR(IRemote):
         self.extractions_indiv = dict()
         self.extraction_group = PlotData()
         self.resource = PlotData()
+        # ---------------------------------------------------------------------
+        # used for continuous time
+        # ----------------------------------------------------------------------
+        self.start_time = None
+        self.new_extraction_signal = signal("new_extraction")
 
     def remote_configure(self, params):
         """
@@ -82,6 +90,8 @@ class RemoteDYNCPR(IRemote):
             del self.histo[:]
             self.histo_vars = texts_DYNCPR.get_histo_vars()
             self.histo.append(texts_DYNCPR.get_histo_head())
+        if self.currentperiod == 1 and pms.TREATMENT == pms.CONTINUOUS:
+            self.start_time = datetime.now()
 
     @defer.inlineCallbacks
     def remote_display_decision(self):
@@ -102,24 +112,42 @@ class RemoteDYNCPR(IRemote):
             else:
                 start = datetime.now()
                 end = datetime.now()
-                while (end - start).total_seconds() >= pms.TIME_DURATION.total_seconds():
+                while (end - start).total_seconds() >= \
+                        pms.CONTINOUS_TIME_DURATION.total_seconds():
                     if random.random() <= 0.10:
                         pass # todo
 
-
-        else: 
+        else:
             defered = defer.Deferred()
             ecran_decision = GuiDecision(
                 defered, self._le2mclt.automatique,
                 self._le2mclt.screen, self.currentperiod, self.histo)
+            self.new_extraction_signal.connect(ecran_decision.new_extraction)
             ecran_decision.show()
             defer.returnValue(defered)
 
-    def remote_update_extractions(self, new_extractions):
-        self.extraction_group = 0
-        for k, v in new_extractions.items():
+    def remote_new_extraction(self, group_members_extractions, group_extraction):
+        """
+        called by the players as soon as there is a new extraction in the
+        group.
+        Used only in the continuous treatment
+        :param group_members_extractions:
+        :param group_extraction:
+        :return:
+        """
+        # we set the same time
+        xdata = (datetime.now() - self.start_time).total_seconds()
+
+        # group extraction
+        self.extraction_group.xdata = xdata
+        self.extraction_group.ydata = group_extraction["extraction"]
+        self.extraction_group.update_curve()
+
+        # individual extractions
+        for k, v in group_members_extractions.items():
+            self.extractions_indiv[k].xdata = xdata
             self.extractions_indiv[k].ydata = v
-            self.extraction_group += v
+            self.extractions_indiv[k].update_curve()
 
 
     def remote_display_summary(self, period_content):
