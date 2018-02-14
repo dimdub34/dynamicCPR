@@ -8,6 +8,7 @@ from util.utili18n import le2mtrans
 import dynamicCPRParams as pms
 from dynamicCPRGui import DConfigure
 from dynamicCPRTexts import trans_DYNCPR
+from dynamicCPRGroup import DYNCPRGroup
 
 
 logger = logging.getLogger("le2m.{}".format(__name__))
@@ -16,6 +17,7 @@ logger = logging.getLogger("le2m.{}".format(__name__))
 class Serveur(object):
     def __init__(self, le2mserv):
         self._le2mserv = le2mserv
+        self._current_sequence = 0
 
         # creation of the menu (will be placed in the "part" menu on the
         # server screen)
@@ -55,15 +57,6 @@ class Serveur(object):
         # init part
         # ----------------------------------------------------------------------
 
-        yield (self._le2mserv.gestionnaire_experience.init_part(
-            "dynamicCPR", "PartieDYNCPR", "RemoteDYNCPR", pms))
-        self._tous = self._le2mserv.gestionnaire_joueurs.get_players(
-            'dynamicCPR')
-
-        # set parameters on remotes
-        yield (self._le2mserv.gestionnaire_experience.run_step(
-            le2mtrans(u"Configure"), self._tous, "configure"))
-        
         # form groups
         if pms.TAILLE_GROUPES > 0:
             try:
@@ -74,6 +67,24 @@ class Serveur(object):
                 self._le2mserv.gestionnaire_graphique.display_error(
                     e.message)
                 return
+            else:
+                for g, m in self._le2mserv.gestionnaire_groupes.get_groupes().items():
+                    group = DYNCPRGroup(self, g, m, self._current_sequence)
+                    for j in m:
+                        j.group = group
+
+        # set parameters on remotes
+        yield (self._le2mserv.gestionnaire_experience.run_step(
+            le2mtrans(u"Configure"), self._tous, "configure"))
+
+        self._current_sequence += 1
+
+        # creates parts
+        yield (self._le2mserv.gestionnaire_experience.init_part(
+            "dynamicCPR", "PartieDYNCPR", "RemoteDYNCPR", pms,
+            current_sequence=self._current_sequence))
+        self._tous = self._le2mserv.gestionnaire_joueurs.get_players(
+            'dynamicCPR')
 
         # ----------------------------------------------------------------------
         # SELECT THE INITIAL EXTRACTION
