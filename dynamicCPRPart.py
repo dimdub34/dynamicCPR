@@ -18,13 +18,20 @@ logger = logging.getLogger("le2m")
 class PartieDYNCPR(Partie, pb.Referenceable):
     __tablename__ = "partie_dynamicCPR"
     __mapper_args__ = {'polymorphic_identity': 'dynamicCPR'}
+
     partie_id = Column(Integer, ForeignKey('parties.id'), primary_key=True)
     repetitions = relationship('RepetitionsDYNCPR')
 
-    def __init__(self, le2mserv, joueur):
+    DYNCPR_current_sequence = Column(Integer)
+    DYNCPR_gain_ecus = Column(Float)
+    DYNCPR_gain_euros = Column(Float)
+
+    def __init__(self, le2mserv, joueur, **kwargs):
         super(PartieDYNCPR, self).__init__(
             nom="dynamicCPR", nom_court="DYNCPR",
             joueur=joueur, le2mserv=le2mserv)
+
+        self.DYNCPR_current_sequence = kwargs.get("current_sequence", 0)
         self.DYNCPR_gain_ecus = 0
         self.DYNCPR_gain_euros = 0
 
@@ -43,7 +50,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} New Period".format(self.joueur))
         self.currentperiod = RepetitionsDYNCPR(period)
-        self.currentperiod.DYNCPR_group = self.joueur.group
+        self.currentperiod.DYNCPR_group = self.joueur.group.uid
         self.le2mserv.gestionnaire_base.ajouter(self.currentperiod)
         self.repetitions.append(self.currentperiod)
         yield (self.remote.callRemote("newperiod", period))
@@ -121,13 +128,34 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         logger.info(u'{} Payoff ecus {} Payoff euros {:.2f}'.format(
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
 
-
     @defer.inlineCallbacks
     def remote_new_extraction(self, extraction):
-        self.current_extraction = ExtractionsDYNCRP()
-        self.current_extraction.DYNCRP_extraction = extraction
+        """
+        Called by the remote when the subject makes an extraction in the
+        continuous treatment
+        :param extraction:
+        :return:
+        """
+        self.current_extraction = ExtractionsDYNCPR(extraction)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
+        self.joueur.group.add_extraction(
+            self.joueur, extraction, self.currentperiod.number())
+        yield (self.le2mserv.gestionnaire_experience.run_func(
+            self.joueur.group.players_part(), "inform_remote_of_new_extraction"
+        ))
+
+    @defer.inlineCallbacks
+    def inform_remote_of_new_extraction(self):
+        """
+        Called by the players in the group (the player himself) in order to
+        inform, in the continuous treatment, that a group member has made a
+        new extraction
+        :return:
+        """
+        yield (self.remote.callRemote(
+            "new_extraction", self.joueur.group.current_players_extractions,
+            self.joueur.group.current_extraction))
 
 
 
@@ -149,6 +177,9 @@ class RepetitionsDYNCPR(Base):
     def __init__(self, period):
         self.DYNCPR_period = period
 
+    def number(self):
+        return self.DYNCPR_period
+
     def todict(self, joueur=None):
         temp = {c.name: getattr(self, c.name) for c in self.__table__.columns
                 if "DYNCPR" in c.name}
@@ -157,7 +188,7 @@ class RepetitionsDYNCPR(Base):
         return temp
 
 
-class ExtractionsDYNCRP(Base):
+class ExtractionsDYNCPR(Base):
     """
     In each period the subject can do several extractions in the continuous time
     treatment
@@ -167,3 +198,6 @@ class ExtractionsDYNCRP(Base):
     repetitions_id = Column(Integer, ForeignKey("partie_dynamicCPR_repetitions.id"))
     DYNCRP_extraction = Column(Float)
     DYNCRP_extraction_time = Column(DateTime, default=datetime.now())
+
+    def __init__(self, extraction):
+        self.DYNCRP_extraction = extraction
