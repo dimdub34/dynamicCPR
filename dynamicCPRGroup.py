@@ -1,21 +1,21 @@
 from server.servbase import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
-from datetime import datetime
 
 
 class DYNCPRGroup(Base):
     __tablename__ = "group_dynamicCPR"
-    uid = Column(Integer, primary_key=True)
-    session_id = Column(Integer, ForeignKey("sessions.id"))
-    extractions = relationship("DYNCPRGroupExtraction")
+    uid = Column(String(30), primary_key=True)
+    session_id = Column(Integer)
     DYNCPR_sequence = Column(Integer)
+    extractions = relationship("DYNCPRGroupExtraction")
 
     def __init__(self, le2mserv, group_id, player_list, sequence=0):
         self.le2mserv = le2mserv
         self.uid = group_id
-        self.DYNCPR_sequence = sequence
+        self.session_id = self.le2mserv.gestionnaire_base.session.id
         self._players = player_list
+        self.DYNCPR_sequence = sequence
         self._current_players_extractions = dict()
         self._current_extraction = None
 
@@ -27,6 +27,15 @@ class DYNCPRGroup(Base):
         """
         return self._players[:]
 
+    @property
+    def players_uid(self):
+        """
+        return only the uid
+        :return:
+        """
+        return [p.uid for p in self.players]
+
+    @property
     def players_part(self):
         """
         return the dynamicCPR part of players
@@ -43,24 +52,16 @@ class DYNCPRGroup(Base):
         method without this arg
         :return:
         """
-        self._current_players_extractions[player] = extraction
+        self._current_players_extractions[player] = extraction.to_dict()
         self._current_extraction = DYNCPRGroupExtraction(
             period, extraction.DYNCPR_extraction_time,
-            sum([e.DYNCPR_extraction for e in self._current_players_extractions.values()]))
+            sum([e["extraction"] for e in self._current_players_extractions.values()]))
         self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
         self.extractions.append(self._current_extraction)
 
     @property
     def current_extraction(self):
-        """
-        return a dict
-        :return:
-        """
-        return {
-            "period": self._current_extraction.DYNCPR_period,
-            "time": self._current_extraction.DYNCRP_time,
-            "extraction": self._current_extraction.DYNCPR_group_extraction
-        }
+        return self._current_extraction.to_dict()
 
     @property
     def current_players_extractions(self):
@@ -81,3 +82,9 @@ class DYNCPRGroupExtraction(Base):
         self.DYNCPR_time = time
         self.DYNCPR_group_extraction = value
 
+    def to_dict(self):
+        return {
+            "period": self.DYNCPR_period,
+            "time": self.DYNCPR_time,
+            "extraction": self.DYNCPR_group_extraction
+        }

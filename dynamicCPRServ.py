@@ -68,7 +68,8 @@ class Serveur(object):
                 return
             else:
                 for g, m in self._le2mserv.gestionnaire_groupes.get_groupes().items():
-                    group = DYNCPRGroup(self, g, m, self._current_sequence)
+                    group = DYNCPRGroup(self._le2mserv, g, m, self._current_sequence)
+                    self._le2mserv.gestionnaire_base.ajouter(group)
                     for j in m:
                         j.group = group
 

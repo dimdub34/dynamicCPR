@@ -38,7 +38,7 @@ DECISION_STEP = 1
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINOUS_TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)
+CONTINUOUS_TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)
 # refresh of the extractions and resource stock variations
 CONTINUOUS_REFRESH = datetime.timedelta(hours=0, minutes=0, seconds=1)
 # time for the player to take a decision

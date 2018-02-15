@@ -4,7 +4,6 @@ import logging
 import random
 from twisted.internet import defer
 from datetime import datetime
-from blinker import signal
 import numpy as np
 import time
 
@@ -31,7 +30,6 @@ class RemoteDYNCPR(IRemote):
         # used for continuous time
         # ----------------------------------------------------------------------
         self.start_time = None
-        self.new_extraction_signal = signal("new_extraction")
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -60,8 +58,23 @@ class RemoteDYNCPR(IRemote):
             del self.histo[:]
             self.histo_vars = texts_DYNCPR.get_histo_vars()
             self.histo.append(texts_DYNCPR.get_histo_head())
-        if self.currentperiod == 1 and pms.TREATMENT == pms.CONTINUOUS:
-            self.start_time = datetime.now()
+
+    @defer.inlineCallbacks
+    def remote_set_initial_extraction(self):
+        """
+        the player set his initial extraction, before to start the game
+        :return:
+        """
+        if self.le2mclt.simulation:
+            extraction = float(np.random.choice(
+                np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
+                          pms.DECISION_STEP)))
+            logger.info(u"{} Send {}".format(self._le2mclt.uid,
+                                             extraction))
+            yield (self.server_part.callRemote(
+                "new_extraction", extraction))
+        else:
+            pass  # todo: display a screen
 
     @defer.inlineCallbacks
     def remote_display_decision(self):
@@ -70,31 +83,22 @@ class RemoteDYNCPR(IRemote):
         :return: deferred
         """
         logger.info(u"{} Decision".format(self._le2mclt.uid))
+        self.start_time = datetime.now()
 
         if self._le2mclt.simulation:
-
-            # if period==0 then the subject set his initial extraction
-            if self.currentperiod == 0:
-                extraction = float(np.random.choice(
-                    np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
-                              pms.DECISION_STEP)))
-                logger.info(u"{} Send back {}".format(self._le2mclt.uid, extraction))
-                defer.returnValue(extraction)
-
-            else:
-                start = datetime.now()
+            end = datetime.now()
+            while (end - self.start_time).total_seconds() <= \
+                    pms.CONTINUOUS_TIME_DURATION.total_seconds():
+                time.sleep(1)
+                if random.random() <= 0.25:
+                    extraction = float(np.random.choice(
+                        np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
+                                  pms.DECISION_STEP)))
+                    logger.info(u"{} Send {}".format(self._le2mclt.uid,
+                                                          extraction))
+                    yield (self.server_part.callRemote(
+                        "new_extraction", extraction))
                 end = datetime.now()
-                while (end - start).total_seconds() <= \
-                        pms.CONTINOUS_TIME_DURATION.total_seconds():
-                    time.sleep(1)
-                    if random.random() <= 0.25:
-                        extraction = float(np.random.choice(
-                            np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
-                                      pms.DECISION_STEP)))
-                        logger.info(u"{} Send {}".format(self._le2mclt.uid,
-                                                              extraction))
-                        yield (self.server_part.callRemote(
-                            "new_extraction", extraction))
 
         else:
             defered = defer.Deferred()
@@ -116,19 +120,28 @@ class RemoteDYNCPR(IRemote):
         :return:
         """
         # we set the same time
-        xdata = (group_extraction["time"] - self.start_time).total_seconds()
+        if self.currentperiod == 0:
+            xdata = 0
+        else:
+            xdata = (group_extraction["time"] - self.start_time).total_seconds()
 
         # group extraction
         self.extraction_group.xdata = xdata
         self.extraction_group.ydata = group_extraction["extraction"]
-        self.extraction_group.update_curve()
+        try:
+            self.extraction_group.update_curve()
+        except AttributeError:
+            pass
 
         # individual extractions
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].xdata = xdata
-            self.extractions_indiv[k].ydata = v.DYNCPR_extraction
-            self.extractions_indiv[k].update_curve()
-
+            self.extractions_indiv[k].ydata = v["extraction"]
+            try:
+                self.extractions_indiv[k].update_curve()
+            # if period==0 or simulation then there is no curve
+            except AttributeError:
+                pass
 
     def remote_display_summary(self, period_content):
         """
