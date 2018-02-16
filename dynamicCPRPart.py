@@ -23,6 +23,8 @@ class PartieDYNCPR(Partie, pb.Referenceable):
     repetitions = relationship('RepetitionsDYNCPR')
 
     DYNCPR_current_sequence = Column(Integer)
+    DYNCPR_treatment = Column(Integer, default=pms.TREATMENT)
+    DYNCPR_group = Column(Integer, default=None)
     DYNCPR_gain_ecus = Column(Float)
     DYNCPR_gain_euros = Column(Float)
 
@@ -78,11 +80,38 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Decision".format(self.joueur))
         debut = datetime.now()
-        self.currentperiod.DYNCPR_decision = yield(self.remote.callRemote(
-            "display_decision"))
+        yield (self.remote.callRemote("display_decision"))
         self.currentperiod.DYNCPR_decisiontime = (datetime.now() - debut).seconds
-        self.joueur.info(u"{}".format(self.currentperiod.DYNCPR_decision))
         self.joueur.remove_waitmode()
+
+    @defer.inlineCallbacks
+    def remote_new_extraction(self, extraction):
+        """
+        Called by the remote when the subject makes an extraction in the
+        continuous treatment
+        :param extraction:
+        :return:
+        """
+        self.current_extraction = ExtractionsDYNCPR(extraction)
+        self.joueur.info(self.current_extraction)
+        self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
+        self.currentperiod.extractions.append(self.current_extraction)
+        self.joueur.group.add_extraction(
+            self.joueur.uid, self.current_extraction, self.currentperiod.number)
+        yield (self.le2mserv.gestionnaire_experience.run_func(
+            self.joueur.group.players_part, "inform_remote_of_new_extraction"))
+
+    @defer.inlineCallbacks
+    def inform_remote_of_new_extraction(self):
+        """
+        Called by the players in the group (the player himself) in order to
+        inform, in the continuous treatment, that a group member has made a
+        new extraction
+        :return:
+        """
+        yield (self.remote.callRemote(
+            "new_extraction", self.joueur.group.current_players_extractions,
+            self.joueur.group.current_extraction))
 
     def compute_periodpayoff(self):
         """
@@ -96,7 +125,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         if self.currentperiod.DYNCPR_period < 2:
             self.currentperiod.DYNCPR_cumulativepayoff = \
                 self.currentperiod.DYNCPR_periodpayoff
-        else: 
+        else:
             previousperiod = self.periods[self.currentperiod.DYNCPR_period - 1]
             self.currentperiod.DYNCPR_cumulativepayoff = \
                 previousperiod.DYNCPR_cumulativepayoff + \
@@ -141,35 +170,6 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         logger.info(u'{} Payoff ecus {} Payoff euros {:.2f}'.format(
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
 
-    @defer.inlineCallbacks
-    def remote_new_extraction(self, extraction):
-        """
-        Called by the remote when the subject makes an extraction in the
-        continuous treatment
-        :param extraction:
-        :return:
-        """
-        self.current_extraction = ExtractionsDYNCPR(extraction)
-        self.joueur.info(self.current_extraction)
-        self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
-        self.currentperiod.extractions.append(self.current_extraction)
-        self.joueur.group.add_extraction(
-            self.joueur.uid, self.current_extraction, self.currentperiod.number)
-        yield (self.le2mserv.gestionnaire_experience.run_func(
-            self.joueur.group.players_part, "inform_remote_of_new_extraction"))
-
-    @defer.inlineCallbacks
-    def inform_remote_of_new_extraction(self):
-        """
-        Called by the players in the group (the player himself) in order to
-        inform, in the continuous treatment, that a group member has made a
-        new extraction
-        :return:
-        """
-        yield (self.remote.callRemote(
-            "new_extraction", self.joueur.group.current_players_extractions,
-            self.joueur.group.current_extraction))
-
 
 class RepetitionsDYNCPR(Base):
     __tablename__ = 'partie_dynamicCPR_repetitions'
@@ -179,8 +179,6 @@ class RepetitionsDYNCPR(Base):
 
     DYNCPR_period = Column(Integer)
     DYNCPR_period_start_time = Column(DateTime, default=datetime.now)
-    DYNCPR_treatment = Column(Integer, default=pms.TREATMENT)
-    DYNCPR_group = Column(Integer, default=None)
     DYNCPR_decision = Column(Integer, default=0)
     DYNCPR_decisiontime = Column(Integer, default=0)
     DYNCPR_periodpayoff = Column(Float, default=0)

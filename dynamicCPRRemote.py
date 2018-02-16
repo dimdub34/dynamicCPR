@@ -86,19 +86,32 @@ class RemoteDYNCPR(IRemote):
         self.start_time = datetime.now()
 
         if self._le2mclt.simulation:
-            end = datetime.now()
-            while (end - self.start_time).total_seconds() <= \
-                    pms.CONTINUOUS_TIME_DURATION.total_seconds():
-                time.sleep(1)
-                if random.random() <= 0.25:
-                    extraction = float(np.random.choice(
-                        np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
-                                  pms.DECISION_STEP)))
-                    logger.info(u"{} Send {}".format(self._le2mclt.uid,
-                                                          extraction))
-                    yield (self.server_part.callRemote(
-                        "new_extraction", extraction))
+
+            # __ CONTINU __
+            if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
                 end = datetime.now()
+                while (end - self.start_time).total_seconds() <= \
+                        pms.CONTINUOUS_TIME_DURATION.total_seconds():
+                    time.sleep(1)
+                    if random.random() <= 0.25:
+                        extraction = float(np.random.choice(
+                            np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
+                                      pms.DECISION_STEP)))
+                        logger.info(u"{} Send {}".format(self._le2mclt.uid,
+                                                              extraction))
+                        yield (self.server_part.callRemote(
+                            "new_extraction", extraction))
+                    end = datetime.now()
+
+            # __ DISCRET __
+            elif pms.DYNAMIC_TYPE == pms.DISCRETE:
+                extraction = float(np.random.choice(
+                    np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
+                              pms.DECISION_STEP)))
+                logger.info(u"{} Send {}".format(self._le2mclt.uid,
+                                                 extraction))
+                yield (self.server_part.callRemote(
+                    "new_extraction", extraction))
 
         else:
             defered = defer.Deferred()

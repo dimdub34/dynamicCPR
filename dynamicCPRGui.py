@@ -2,14 +2,18 @@
 """
 This module contains the GUI
 """
+import sys
 import logging
 from PyQt4 import QtGui, QtCore
+from twisted.internet import defer
+
 from util.utili18n import le2mtrans
 import dynamicCPRParams as pms
 from dynamicCPRTexts import trans_DYNCPR
 import dynamicCPRTexts as texts_DYNCPR
 from client.cltgui.cltguidialogs import GuiHistorique
-from client.cltgui.cltguiwidgets import WPeriod, WExplication, WSpinbox
+from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WSpinbox,
+                                         WCompterebours, WSlider)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 
@@ -121,15 +125,19 @@ class GuiDecision(QtGui.QDialog):
             size=(450, 80), parent=self)
         layout.addWidget(wexplanation)
 
+        if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            wtimer = WCompterebours(
+                self, pms.CONTINUOUS_TIME_DURATION, self._accept)
+            layout.addWidget(wtimer)
+
         self.graphical_zone = PlotWidget()
         layout.addWidget(self.graphical_zone)
 
-        self._wdecision = WSpinbox(
-            label=texts_DYNCPR.get_text_label_decision(),
-            minimum=pms.DECISION_MIN, maximum=pms.DECISION_MAX,
-            interval=pms.DECISION_STEP, automatique=self._automatique,
-            parent=self)
-        layout.addWidget(self._wdecision)
+        self.extract_dec = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.extract_dec.setMinimum(pms.DECISION_MIN)
+        self.extract_dec.setMaximum(pms.DECISION_MAX)
+        self.extract_dec.sliderReleased.connect(lambda _: self.send_extraction())
+        layout.addWidget(self.extract_dec)
 
         buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
         buttons.accepted.connect(self._accept)
@@ -138,6 +146,12 @@ class GuiDecision(QtGui.QDialog):
         self.setWindowTitle(trans_DYNCPR(u"Décision"))
         self.adjustSize()
         self.setFixedSize(self.size())
+
+        if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self._timer_continuous = QtCore.QTimer()
+            self._timer_continuous.timeout.connect(self.update_graphs)
+            self._timer_continuous.setSingleShot(False)
+            self._timer_continuous.start(1000)
 
         if self._automatique:
             self._timer_automatique = QtCore.QTimer()
@@ -165,9 +179,14 @@ class GuiDecision(QtGui.QDialog):
         self.accept()
         self._defered.callback(decision)
 
-    def new_extraction(self):
+    def update_graphs(self):
         self.graphical_zone.plot_extraction.fig.canvas.draw()
         self.graphical_zone.plot_resource.fig.canvas.draw()
+
+    @defer.inlineCallbacks
+    def send_extraction(self):
+        yield (self.remote.server_part.callRemote(
+            "new_extraction", self.extract_dec.value()))
 
 
 class DConfigure(QtGui.QDialog):
@@ -228,3 +247,22 @@ class DConfigure(QtGui.QDialog):
         pms.NOMBRE_PERIODES = self._spin_periods.value()
         pms.TAILLE_GROUPES = self._spin_groups.value()
         self.accept()
+
+
+class TestSlider(QtGui.QDialog):
+    def __init__(self):
+        super(TestSlider, self).__init__()
+        layout = QtGui.QVBoxLayout(self)
+        self.extract_dec = WSlider(
+            parent=self, label=trans_DYNCPR(u"Your extraction"),
+            minimum=pms.DECISION_MIN, maximum=pms.DECISION_MAX,
+            interval=pms.DECISION_STEP
+        )
+        layout.addWidget(self.extract_dec)
+
+
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    test_slider = TestSlider()
+    test_slider.show()
+    sys.exit(app.exec_())

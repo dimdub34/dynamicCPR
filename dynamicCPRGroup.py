@@ -1,21 +1,27 @@
+# -*- coding: utf-8 -*-
+
 from server.servbase import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
 
+import dynamicCPRParams as pms
 
-class DYNCPRGroup(Base):
+
+class GroupDYNCPR(Base):
     __tablename__ = "group_dynamicCPR"
     uid = Column(String(30), primary_key=True)
     session_id = Column(Integer)
     DYNCPR_sequence = Column(Integer)
-    extractions = relationship("DYNCPRGroupExtraction")
+    DYNCPR_treatment = Column(Integer)
+    extractions = relationship("GroupExtractionDYNCPR")
 
-    def __init__(self, le2mserv, group_id, player_list, sequence=0):
+    def __init__(self, le2mserv, group_id, player_list, sequence):
         self.le2mserv = le2mserv
         self.uid = group_id
         self.session_id = self.le2mserv.gestionnaire_base.session.id
         self._players = player_list
         self.DYNCPR_sequence = sequence
+        self.DYNCPR_treatment = pms.TREATMENT
         self._current_players_extractions = dict()
         self._current_extraction = None
 
@@ -43,7 +49,7 @@ class DYNCPRGroup(Base):
         """
         return [j.get_part("dynamicCPR") for j in self.players]
 
-    def add_extraction(self, player, extraction, period=None):
+    def add_extraction(self, player, extraction, period):
         """
 
         :param player: the player at the origin of the extraction
@@ -53,7 +59,7 @@ class DYNCPRGroup(Base):
         :return:
         """
         self._current_players_extractions[player] = extraction.to_dict()
-        self._current_extraction = DYNCPRGroupExtraction(
+        self._current_extraction = GroupExtractionDYNCPR(
             period, extraction.DYNCPR_extraction_time,
             sum([e["extraction"] for e in self._current_players_extractions.values()]))
         self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
@@ -67,8 +73,12 @@ class DYNCPRGroup(Base):
     def current_players_extractions(self):
         return self._current_players_extractions.copy()
 
+    @property
+    def uid_short(self):
+        return self.uid.split("_")[2]
 
-class DYNCPRGroupExtraction(Base):
+
+class GroupExtractionDYNCPR(Base):
     __tablename__ = "group_dynamicCPR_extractions"
     id = Column(Integer, primary_key=True, autoincrement=True)
     group_uid = Column(String, ForeignKey("group_dynamicCPR.uid"))
