@@ -7,6 +7,7 @@ from datetime import datetime
 import numpy as np
 import time
 
+from util.utiltools import RepeatedTimer
 from client.cltremote import IRemote
 from client.cltgui.cltguidialogs import GuiRecapitulatif
 import dynamicCPRParams as pms
@@ -26,10 +27,29 @@ class RemoteDYNCPR(IRemote):
         self.extractions_indiv = dict()
         self.extraction_group = PlotData()
         self.resource = PlotData()
+        self.resource.xdata = 0
+        self.resource.ydata = pms.RESOURCE_INITIAL_STOCK
         # ---------------------------------------------------------------------
         # used for continuous time
         # ----------------------------------------------------------------------
         self.start_time = None
+
+    def evol_data(self):
+        now = datetime.now()
+        sum_indiv = 0
+        for k, v in self.extractions_indiv.items():
+            v.xdata = (now - self.start_time).total_seconds()
+            v.ydata = v.ydata
+            sum_indiv += v.ydata
+        self.extraction_group.xdata = (now - self.start_time).total_seconds()
+        self.extraction_group.ydata = sum_indiv
+        self.resource.xdata = (now - self.start_time).total_seconds()
+        res_val = self.resource.ydata
+        res_val *= (1 + pms.RESOURCE_GROWTH_RATE)
+        res_val -= self.extraction_group.ydata
+        self.resource.ydata = res_val
+        logger.debug("EVOL_DATA - {}: Group: {} - Resource: {}".format(
+            self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -40,7 +60,7 @@ class RemoteDYNCPR(IRemote):
         logger.info(u"{} configure".format(self._le2mclt.uid))
         self.server_part = server_part
         self.group_members = group_members
-        for k, v in params.viewitems():
+        for k, v in params.items():
             setattr(pms, k, v)
         # we create a data plot for each group member
         for j in self.group_members:
@@ -89,6 +109,8 @@ class RemoteDYNCPR(IRemote):
 
             # __ CONTINU __
             if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+
+                self.resource_generator = RepeatedTimer(1, self.evol_data)
                 end = datetime.now()
                 while (end - self.start_time).total_seconds() <= \
                         pms.CONTINUOUS_TIME_DURATION.total_seconds():
@@ -102,6 +124,7 @@ class RemoteDYNCPR(IRemote):
                         yield (self.server_part.callRemote(
                             "new_extraction", extraction))
                     end = datetime.now()
+                self.resource_generator.stop()
 
             # __ DISCRET __
             elif pms.DYNAMIC_TYPE == pms.DISCRETE:
@@ -146,6 +169,11 @@ class RemoteDYNCPR(IRemote):
         except AttributeError:
             pass
 
+        # resource
+        self.resource.xdata = xdata
+        self.resource.ydata = self.resource.ydata - \
+                              group_extraction["extraction"]
+
         # individual extractions
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].xdata = xdata
@@ -155,6 +183,9 @@ class RemoteDYNCPR(IRemote):
             # if period==0 or simulation then there is no curve
             except AttributeError:
                 pass
+
+        logger.debug("REMOTE_NEW_EXTRACTION - {}: Group: {} - Resource: {}".format(
+            self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
 
     def remote_display_summary(self, period_content):
         """
@@ -208,3 +239,5 @@ class PlotData():
 
     def update_curve(self):
         self._curve.set_data(self._xdata, self._ydata)
+
+
