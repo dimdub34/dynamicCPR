@@ -64,6 +64,8 @@ class GroupDYNCPR(Base):
             sum([e["extraction"] for e in self._current_players_extractions.values()]))
         self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
         self.extractions.append(self._current_extraction)
+        self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
+            self.uid_short, self._current_extraction.DYNCPR_group_extraction))
 
     @property
     def current_extraction(self):
