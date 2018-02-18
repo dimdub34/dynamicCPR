@@ -27,16 +27,16 @@ TREATMENT = BASELINE
 TAUX_CONVERSION = 1
 NOMBRE_PERIODES = 2
 TAILLE_GROUPES = 2
-GROUPES_CHAQUE_PERIODE = False
 MONNAIE = u"ecu"
-PERIODE_ESSAI = False
 
 # DECISION
 DECISION_MIN = 0
 DECISION_MAX = 20
 DECISION_STEP = 0.01
 
-DYNAMIC_TYPE = DISCRETE
+PARTIE_ESSAI = False
+
+DYNAMIC_TYPE = CONTINUOUS
 # continuous game
 CONTINUOUS_TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)
 # refresh of the extractions and resource stock variations
@@ -48,7 +48,7 @@ DISCRETE_DECISION_TIME = datetime.timedelta(hours=0, minutes=1, seconds=0)
 # RESOURCE
 # ------------------------------------------------------------------------------
 RESOURCE_INITIAL_STOCK = 100
-RESOURCE_GROWTH_RATE = 0.20
+RESOURCE_GROWTH_RATE = 0.2
 
 
 
