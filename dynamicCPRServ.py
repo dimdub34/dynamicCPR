@@ -4,6 +4,7 @@ from collections import OrderedDict
 from twisted.internet import defer
 from util import utiltools
 from util.utili18n import le2mtrans
+from util.utiltools import get_module_attributes
 import dynamicCPRParams as pms
 from dynamicCPRGui import DConfigure
 from dynamicCPRTexts import trans_DYNCPR
@@ -36,10 +37,12 @@ class Serveur(object):
     def _configure(self):
         screen_conf = DConfigure(self._le2mserv.gestionnaire_graphique.screen)
         if screen_conf.exec_():
-            self._le2mserv.gestionnaire_graphique.infoserv(
-                u"Traitement: {}".format(pms.TREATMENTS_NAMES.get(pms.TREATMENT)))
-            self._le2mserv.gestionnaire_graphique.infoserv(
-                u"Période d'essai: {}".format("oui" if pms.PERIODE_ESSAI else "non"))
+            pms_list = []
+            for k, v in get_module_attributes(pms).items():
+                if k in ["TREATMENT", "DYNAMIC_TYPE", "NOMBRE_PERIODES",
+                         "PARTIE_ESSAI"]:
+                    pms_list.append("{}: {}".format(k, v))
+            self._le2mserv.gestionnaire_graphique.infoserv(pms_list)
 
     @defer.inlineCallbacks
     def _demarrer(self):
@@ -93,7 +96,8 @@ class Serveur(object):
         # SELECT THE INITIAL EXTRACTION
         # ----------------------------------------------------------------------
 
-        self._le2mserv.gestionnaire_graphique.infoclt(trans_DYNCPR(u"Initial extraction"))
+        self._le2mserv.gestionnaire_graphique.infoclt(trans_DYNCPR(
+            u"Initial extraction"))
         yield (self._le2mserv.gestionnaire_experience.run_func(
             self._tous, "newperiod", 0))
         yield (self._le2mserv.gestionnaire_experience.run_step(
@@ -116,6 +120,7 @@ class Serveur(object):
                 trans_DYNCPR("Decision"), self._tous, "display_decision"))
 
         elif pms.DYNAMIC_TYPE == pms.DISCRETE:
+
             for period in range(1, pms.NOMBRE_PERIODES + 1):
 
                 if self._le2mserv.gestionnaire_experience.stop_repetitions:
