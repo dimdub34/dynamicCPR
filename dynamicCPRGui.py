@@ -206,6 +206,17 @@ class DConfigure(QtGui.QDialog):
         self._combo_treatment.setCurrentIndex(pms.TREATMENT)
         form.addRow(QtGui.QLabel(u"Traitement"), self._combo_treatment)
 
+        # dynamic
+        self._combo_dynamic = QtGui.QComboBox()
+        self._combo_dynamic.addItems(["CONTINUOUS", "DISCRETE"])
+        self._combo_dynamic.setCurrentIndex(pms.DYNAMIC_TYPE)
+        form.addRow(QtGui.QLabel("Dynamic"), self._combo_dynamic)
+
+        # partie d'essai
+        self._checkbox_essai = QtGui.QCheckBox()
+        self._checkbox_essai.setChecked(pms.PARTIE_ESSAI)
+        form.addRow(QtGui.QLabel(u"Partie d'essai"), self._checkbox_essai)
+
         # nombre de périodes
         self._spin_periods = QtGui.QSpinBox()
         self._spin_periods.setMinimum(0)
@@ -215,11 +226,6 @@ class DConfigure(QtGui.QDialog):
         self._spin_periods.setButtonSymbols(QtGui.QSpinBox.NoButtons)
         self._spin_periods.setMaximumWidth(50)
         form.addRow(QtGui.QLabel(u"Nombre de périodes"), self._spin_periods)
-
-        # periode essai
-        self._checkbox_essai = QtGui.QCheckBox()
-        self._checkbox_essai.setChecked(pms.PERIODE_ESSAI)
-        form.addRow(QtGui.QLabel(u"Période d'essai"), self._checkbox_essai)
 
         # taille groupes
         self._spin_groups = QtGui.QSpinBox()
