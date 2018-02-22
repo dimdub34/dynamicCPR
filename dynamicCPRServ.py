@@ -1,23 +1,30 @@
 # -*- coding: utf-8 -*-
+
 import logging
 from collections import OrderedDict
-from twisted.internet import defer
+from twisted.internet import defer, reactor
+from blinker import signal
+
 from util import utiltools
 from util.utili18n import le2mtrans
 from util.utiltools import get_module_attributes
+
 import dynamicCPRParams as pms
 from dynamicCPRGui import DConfigure
 from dynamicCPRTexts import trans_DYNCPR
 from dynamicCPRGroup import GroupDYNCPR
+from dynamicCPRUtil import ThreadForRepeatedAction
 
 
 logger = logging.getLogger("le2m.{}".format(__name__))
 
 
-class Serveur(object):
+class Serveur():
     def __init__(self, le2mserv):
         self._le2mserv = le2mserv
         self._current_sequence = 0
+        self._time_elapsed = signal("time_elapsed")
+        self._time_elapsed.connect(lambda _: self._stop_the_groups_thread)
 
         # creation of the menu (will be placed in the "part" menu on the
         # server screen)
@@ -113,11 +120,33 @@ class Serveur(object):
 
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
 
-            self._le2mserv.gestionnaire_graphique.infoclt("")
+            txt = le2mtrans(u"Period") + u" 1"
+            self._le2mserv.gestionnaire_graphique.infoserv(
+                txt, fg="white", bg="gray")
+            self._le2mserv.gestionnaire_graphique.infoclt(
+                txt, fg="white", bg="gray")
             yield (self._le2mserv.gestionnaire_experience.run_func(
                 self._tous, "newperiod", 1))
+
+            # we collect the threads that handle the update of data
+            self._the_groups_thread = [g.thread_update for g in self._groups]
+            # we create a thread thant handles the time
+            self._thread_time = ThreadForRepeatedAction(
+                pms.CONTINUOUS_TIME_DURATION.total_seconds(),
+                self._time_elapsed.send)
+
+            # start the threads
+            for t in self._the_groups_thread:
+                t.start()
+            self._thread_time.start()
+            self._thread_time.again = False
+
+            # start the decision step
             yield(self._le2mserv.gestionnaire_experience.run_step(
                 trans_DYNCPR("Decision"), self._tous, "display_decision"))
+
+            # wait for the thread
+            self._thread_time.join()
 
         elif pms.DYNAMIC_TYPE == pms.DISCRETE:
 
@@ -156,3 +185,11 @@ class Serveur(object):
         # ----------------------------------------------------------------------
 
         yield (self._le2mserv.gestionnaire_experience.finalize_part("dynamicCPR"))
+
+    @defer.inlineCallbacks
+    def _stop_the_groups_thread(self):
+        for t in self._the_groups_thread:
+            t.stop()
+        yield (self._le2mserv.gestionnaire_experience.run_func(
+            self._groups, "end_update_data"))
+

@@ -7,12 +7,14 @@ from datetime import datetime
 import numpy as np
 import time
 
-from util.utiltools import RepeatedTimer
 from client.cltremote import IRemote
 from client.cltgui.cltguidialogs import GuiRecapitulatif
+
 import dynamicCPRParams as pms
 from dynamicCPRGui import GuiDecision
 import dynamicCPRTexts as texts_DYNCPR
+from dynamicCPRUtil import ThreadForRepeatedAction
+
 
 
 logger = logging.getLogger("le2m")
@@ -34,22 +36,22 @@ class RemoteDYNCPR(IRemote):
         # ----------------------------------------------------------------------
         self.start_time = None
 
-    def evol_data(self):
-        now = datetime.now()
-        sum_indiv = 0
-        for k, v in self.extractions_indiv.items():
-            v.xdata = (now - self.start_time).total_seconds()
-            v.ydata = v.ydata
-            sum_indiv += v.ydata
-        self.extraction_group.xdata = (now - self.start_time).total_seconds()
-        self.extraction_group.ydata = sum_indiv
-        self.resource.xdata = (now - self.start_time).total_seconds()
-        res_val = self.resource.ydata
-        res_val *= (1 + pms.RESOURCE_GROWTH_RATE)
-        res_val -= self.extraction_group.ydata
-        self.resource.ydata = res_val
-        logger.debug("EVOL_DATA - {}: Group: {} - Resource: {}".format(
-            self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
+    # def evol_data(self):
+    #     now = datetime.now()
+    #     sum_indiv = 0
+    #     for k, v in self.extractions_indiv.items():
+    #         v.xdata = (now - self.start_time).total_seconds()
+    #         v.ydata = v.ydata
+    #         sum_indiv += v.ydata
+    #     self.extraction_group.xdata = (now - self.start_time).total_seconds()
+    #     self.extraction_group.ydata = sum_indiv
+    #     self.resource.xdata = (now - self.start_time).total_seconds()
+    #     res_val = self.resource.ydata
+    #     res_val *= (1 + pms.RESOURCE_GROWTH_RATE)
+    #     res_val -= self.extraction_group.ydata
+    #     self.resource.ydata = res_val
+    #     logger.debug("EVOL_DATA - {}: Group: {} - Resource: {}".format(
+    #         self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -103,18 +105,16 @@ class RemoteDYNCPR(IRemote):
         :return: deferred
         """
         logger.info(u"{} Decision".format(self._le2mclt.uid))
-        self.start_time = datetime.now()
+        # self.start_time = datetime.now()
+        self._continue = True
 
         if self._le2mclt.simulation:
 
             # __ CONTINU __
             if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
 
-                self.resource_generator = RepeatedTimer(1, self.evol_data)
-                end = datetime.now()
-                while (end - self.start_time).total_seconds() <= \
-                        pms.CONTINUOUS_TIME_DURATION.total_seconds():
-                    time.sleep(1)
+                @defer.inlineCallbacks
+                def send_simulation():
                     if random.random() <= 0.25:
                         extraction = float(np.random.choice(
                             np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
@@ -123,8 +123,15 @@ class RemoteDYNCPR(IRemote):
                                                               extraction))
                         yield (self.server_part.callRemote(
                             "new_extraction", extraction))
-                    end = datetime.now()
-                self.resource_generator.stop()
+
+                self._thread_simulation = ThreadForRepeatedAction(
+                    5, send_simulation)
+                self._thread_simulation.start()
+                self._thread_simulation.join()
+
+                # wait for the signal of the end of the time
+                while self._continue:
+                    pass
 
             # __ DISCRET __
             elif pms.DYNAMIC_TYPE == pms.DISCRETE:
@@ -146,7 +153,8 @@ class RemoteDYNCPR(IRemote):
             ecran_decision.show()
             defer.returnValue(defered)
 
-    def remote_new_extraction(self, group_members_extractions, group_extraction):
+    def remote_update_data(self, group_members_extractions, group_extraction,
+                           resource_stock):
         """
         called by the players as soon as there is a new extraction in the
         group.
@@ -171,8 +179,11 @@ class RemoteDYNCPR(IRemote):
 
         # resource
         self.resource.xdata = xdata
-        self.resource.ydata = self.resource.ydata - \
-                              group_extraction["extraction"]
+        self.resource.ydata = resource_stock
+        try:
+            self.resource.update_curve()
+        except AttributeError:
+            pass
 
         # individual extractions
         for k, v in group_members_extractions.items():
@@ -184,8 +195,12 @@ class RemoteDYNCPR(IRemote):
             except AttributeError:
                 pass
 
-        logger.debug("REMOTE_NEW_EXTRACTION - {}: Group: {} - Resource: {}".format(
+        logger.debug("REMOTE_UPDATE_DATA - {}: Group: {} - Resource: {}".format(
             self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
+
+    def remote_end_update_data(self):
+        self._thread_simulation.stop()
+        self._continue = False
 
     def remote_display_summary(self, period_content):
         """

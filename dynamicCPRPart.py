@@ -84,7 +84,6 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         self.currentperiod.DYNCPR_decisiontime = (datetime.now() - debut).seconds
         self.joueur.remove_waitmode()
 
-    @defer.inlineCallbacks
     def remote_new_extraction(self, extraction):
         """
         Called by the remote when the subject makes an extraction in the
@@ -98,20 +97,20 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
             self.joueur.uid, self.current_extraction, self.currentperiod.number)
-        yield (self.le2mserv.gestionnaire_experience.run_func(
-            self.joueur.group.players_part, "inform_remote_of_new_extraction"))
+        # yield (self.le2mserv.gestionnaire_experience.run_func(
+        #     self.joueur.group.players_part, "inform_remote_of_new_extraction"))
 
-    @defer.inlineCallbacks
-    def inform_remote_of_new_extraction(self):
-        """
-        Called by the players in the group (the player himself) in order to
-        inform, in the continuous treatment, that a group member has made a
-        new extraction
-        :return:
-        """
-        yield (self.remote.callRemote(
-            "new_extraction", self.joueur.group.current_players_extractions,
-            self.joueur.group.current_extraction))
+    # @defer.inlineCallbacks
+    # def inform_remote_of_new_extraction(self):
+    #     """
+    #     Called by the players in the group (the player himself) in order to
+    #     inform, in the continuous treatment, that a group member has made a
+    #     new extraction
+    #     :return:
+    #     """
+    #     yield (self.remote.callRemote(
+    #         "new_extraction", self.joueur.group.current_players_extractions,
+    #         self.joueur.group.current_extraction))
 
     def compute_periodpayoff(self):
         """

@@ -3,8 +3,15 @@
 from server.servbase import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
+from twisted.internet import defer
+import time
+import logging
+from util.utiltools import RepeatedTimer
 
 import dynamicCPRParams as pms
+from dynamicCPRUtil import ThreadForRepeatedAction
+
+logger = logging.getLogger("le2m")
 
 
 class GroupDYNCPR(Base):
@@ -19,11 +26,13 @@ class GroupDYNCPR(Base):
         self.le2mserv = le2mserv
         self.uid = group_id
         self.session_id = self.le2mserv.gestionnaire_base.session.id
-        self._players = player_list
         self.DYNCPR_sequence = sequence
         self.DYNCPR_treatment = pms.TREATMENT
+        self._players = player_list
         self._current_players_extractions = dict()
         self._current_extraction = None
+        self._current_resource = pms.RESOURCE_INITIAL_STOCK
+        self._thread_update = ThreadForRepeatedAction(5, self.update_data)
 
     @property
     def players(self):
@@ -49,6 +58,10 @@ class GroupDYNCPR(Base):
         """
         return [j.get_part("dynamicCPR") for j in self.players]
 
+    @property
+    def thread_update(self):
+        return  self._thread_update
+
     def add_extraction(self, player, extraction, period):
         """
 
@@ -59,9 +72,12 @@ class GroupDYNCPR(Base):
         :return:
         """
         self._current_players_extractions[player] = extraction.to_dict()
+        group_extrac = sum([e["extraction"] for e in
+                            self._current_players_extractions.values()])
+        self._current_resource -= group_extrac
         self._current_extraction = GroupExtractionDYNCPR(
-            period, extraction.DYNCPR_extraction_time,
-            sum([e["extraction"] for e in self._current_players_extractions.values()]))
+            period, extraction.DYNCPR_extraction_time, group_extrac,
+            self._current_resource)
         self.le2mserv.gestionnaire_base.ajouter(self._current_extraction)
         self.extractions.append(self._current_extraction)
         self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
@@ -76,8 +92,27 @@ class GroupDYNCPR(Base):
         return self._current_players_extractions.copy()
 
     @property
+    def current_resource(self):
+        return self._current_resource
+
+    @property
     def uid_short(self):
         return self.uid.split("_")[2]
+
+    @defer.inlineCallbacks
+    def update_data(self):
+        logger.debug("call of update_data")
+        for j in self.players_part:
+            yield (j.remote.callRemote(
+                "update_data", self.current_players_extractions,
+                self.current_extraction, self.current_resource))
+
+    @defer.inlineCallbacks
+    def end_update_data(self):
+        logger.debug("call of end_update_data")
+        # self.repeated_timer.stop()
+        for j in self.players_part:
+            j.remote.callRemote("end_update_data")
 
 
 class GroupExtractionDYNCPR(Base):
@@ -88,15 +123,17 @@ class GroupExtractionDYNCPR(Base):
     DYNCPR_period = Column(Integer, default=None)
     DYNCPR_time = Column(DateTime, default=None)
     DYNCPR_group_extraction = Column(Float, default=0)
+    DYNCPR_resource_stock = Column(Float)
 
-    def __init__(self, period, time, value):
+    def __init__(self, period, time, value, resource):
         self.DYNCPR_period = period
         self.DYNCPR_time = time
         self.DYNCPR_group_extraction = value
+        self.DYNCPR_resource_stock = resource
 
     def to_dict(self):
         return {
             "period": self.DYNCPR_period,
             "time": self.DYNCPR_time,
-            "extraction": self.DYNCPR_group_extraction
+            "extraction": self.DYNCPR_group_extraction,
         }
