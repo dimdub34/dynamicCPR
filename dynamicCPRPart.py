@@ -72,7 +72,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         yield (self.remote.callRemote("set_initial_extraction"))
 
     @defer.inlineCallbacks
-    def display_decision(self):
+    def display_decision(self, time_start):
         """
         Display the decision screen on the remote
         Get back the decision
@@ -80,8 +80,9 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Decision".format(self.joueur))
         debut = datetime.now()
-        yield (self.remote.callRemote("display_decision"))
-        self.currentperiod.DYNCPR_decisiontime = (datetime.now() - debut).seconds
+        yield (self.remote.callRemote("display_decision", time_start))
+        self.currentperiod.DYNCPR_decisiontime = \
+            (datetime.now() - debut).total_seconds()
         self.joueur.remove_waitmode()
 
     def remote_new_extraction(self, extraction):
@@ -97,20 +98,10 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
             self.joueur.uid, self.current_extraction, self.currentperiod.number)
-        # yield (self.le2mserv.gestionnaire_experience.run_func(
-        #     self.joueur.group.players_part, "inform_remote_of_new_extraction"))
 
-    # @defer.inlineCallbacks
-    # def inform_remote_of_new_extraction(self):
-    #     """
-    #     Called by the players in the group (the player himself) in order to
-    #     inform, in the continuous treatment, that a group member has made a
-    #     new extraction
-    #     :return:
-    #     """
-    #     yield (self.remote.callRemote(
-    #         "new_extraction", self.joueur.group.current_players_extractions,
-    #         self.joueur.group.current_extraction))
+    @defer.inlineCallbacks
+    def end_update_data(self):
+        yield (self.remote.callRemote("end_update_data"))
 
     def compute_periodpayoff(self):
         """
@@ -170,6 +161,11 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
 
 
+# ==============================================================================
+# REPETITIONS
+# ==============================================================================
+
+
 class RepetitionsDYNCPR(Base):
     __tablename__ = 'partie_dynamicCPR_repetitions'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -198,6 +194,11 @@ class RepetitionsDYNCPR(Base):
         return temp
 
 
+# ==============================================================================
+# EXTRACTIONS
+# ==============================================================================
+
+
 class ExtractionsDYNCPR(Base):
     """
     In each period the subject can do several extractions in the continuous time
@@ -215,7 +216,8 @@ class ExtractionsDYNCPR(Base):
 
     def __repr__(self):
         return "extraction: {} - time: {}".format(
-            self.DYNCPR_extraction, self.DYNCPR_extraction_time)
+            self.DYNCPR_extraction, self.DYNCPR_extraction_time.strftime(
+                "%H:%M:%S"))
 
     def to_dict(self):
         return {"extraction": self.DYNCPR_extraction, "time": self.DYNCPR_extraction_time}

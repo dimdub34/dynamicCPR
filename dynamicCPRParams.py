@@ -8,11 +8,12 @@ If you need to change some parameters below please be sure of what you do,
 which means that you should ask to the developer ;-)
 ============================================================================="""
 
-import datetime
+from datetime import timedelta
 
 # ------------------------------------------------------------------------------
 # VARIABLES - do not change any value below
 # ------------------------------------------------------------------------------
+
 BASELINE = 0
 TREATMENTS_NAMES = {BASELINE: "Baseline"}
 CONTINUOUS = 0
@@ -38,11 +39,11 @@ PARTIE_ESSAI = False
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = datetime.timedelta(hours=0, minutes=2, seconds=0)
+CONTINUOUS_TIME_DURATION = timedelta(seconds=30)
 # refresh of the extractions and resource stock variations
-CONTINUOUS_REFRESH = datetime.timedelta(hours=0, minutes=0, seconds=1)
+CONTINUOUS_REFRESH = timedelta(seconds=5)
 # time for the player to take a decision
-DISCRETE_DECISION_TIME = datetime.timedelta(hours=0, minutes=1, seconds=0)
+DISCRETE_DECISION_TIME = timedelta(minutes=1)
 
 # ------------------------------------------------------------------------------
 # RESOURCE

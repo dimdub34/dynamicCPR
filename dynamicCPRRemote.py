@@ -3,9 +3,8 @@
 import logging
 import random
 from twisted.internet import defer
-from datetime import datetime
 import numpy as np
-import time
+from PyQt4.QtCore import QTimer
 
 from client.cltremote import IRemote
 from client.cltgui.cltguidialogs import GuiRecapitulatif
@@ -13,8 +12,6 @@ from client.cltgui.cltguidialogs import GuiRecapitulatif
 import dynamicCPRParams as pms
 from dynamicCPRGui import GuiDecision
 import dynamicCPRTexts as texts_DYNCPR
-from dynamicCPRUtil import ThreadForRepeatedAction
-
 
 
 logger = logging.getLogger("le2m")
@@ -26,32 +23,15 @@ class RemoteDYNCPR(IRemote):
     """
     def __init__(self, le2mclt):
         IRemote.__init__(self, le2mclt)
-        self.extractions_indiv = dict()
-        self.extraction_group = PlotData()
-        self.resource = PlotData()
-        self.resource.xdata = 0
-        self.resource.ydata = pms.RESOURCE_INITIAL_STOCK
+        self.__extractions_indiv = dict()
+        self.__extraction_group = PlotData()
+        self.__resource = PlotData()
+        self.__resource.xdata = 0
+        self.__resource.ydata = pms.RESOURCE_INITIAL_STOCK
         # ---------------------------------------------------------------------
         # used for continuous time
         # ----------------------------------------------------------------------
-        self.start_time = None
-
-    # def evol_data(self):
-    #     now = datetime.now()
-    #     sum_indiv = 0
-    #     for k, v in self.extractions_indiv.items():
-    #         v.xdata = (now - self.start_time).total_seconds()
-    #         v.ydata = v.ydata
-    #         sum_indiv += v.ydata
-    #     self.extraction_group.xdata = (now - self.start_time).total_seconds()
-    #     self.extraction_group.ydata = sum_indiv
-    #     self.resource.xdata = (now - self.start_time).total_seconds()
-    #     res_val = self.resource.ydata
-    #     res_val *= (1 + pms.RESOURCE_GROWTH_RATE)
-    #     res_val -= self.extraction_group.ydata
-    #     self.resource.ydata = res_val
-    #     logger.debug("EVOL_DATA - {}: Group: {} - Resource: {}".format(
-    #         self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
+        self.__start_time = None
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -59,14 +39,14 @@ class RemoteDYNCPR(IRemote):
         :param params:
         :return:
         """
-        logger.info(u"{} configure".format(self._le2mclt.uid))
-        self.server_part = server_part
-        self.group_members = group_members
+        logger.info(u"{} configure".format(self.le2mclt))
+        self.__server_part = server_part
+        self.__group_members = group_members
         for k, v in params.items():
             setattr(pms, k, v)
         # we create a data plot for each group member
-        for j in self.group_members:
-            self.extractions_indiv[j] = PlotData()
+        for j in self.__group_members:
+            self.__extractions_indiv[j] = PlotData()
 
     def remote_newperiod(self, period):
         """
@@ -93,45 +73,43 @@ class RemoteDYNCPR(IRemote):
                           pms.DECISION_STEP)))
             logger.info(u"{} Send {}".format(self._le2mclt.uid,
                                              extraction))
-            yield (self.server_part.callRemote(
+            yield (self.__server_part.callRemote(
                 "new_extraction", extraction))
         else:
             pass  # todo: display a screen
 
-    @defer.inlineCallbacks
-    def remote_display_decision(self):
+    def remote_display_decision(self, time_start):
         """
         Display the decision screen
         :return: deferred
         """
-        logger.info(u"{} Decision".format(self._le2mclt.uid))
-        # self.start_time = datetime.now()
-        self._continue = True
+        logger.info(u"{}: call of display_decision".format(self.le2mclt))
+        self.__start_time = time_start
 
         if self._le2mclt.simulation:
+
+            def send_simulation():
+                extraction = float(np.random.choice(
+                    np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
+                              pms.DECISION_STEP)))
+                logger.info(u"{} Send {}".format(self._le2mclt.uid,
+                                                 extraction))
+                self.__server_part.callRemote("new_extraction",
+                                              extraction)
+                return extraction
 
             # __ CONTINU __
             if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
 
-                @defer.inlineCallbacks
-                def send_simulation():
-                    if random.random() <= 0.25:
-                        extraction = float(np.random.choice(
-                            np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
-                                      pms.DECISION_STEP)))
-                        logger.info(u"{} Send {}".format(self._le2mclt.uid,
-                                                              extraction))
-                        yield (self.server_part.callRemote(
-                            "new_extraction", extraction))
+                self.__continuous_simulation_defered = defer.Deferred()
+                self.__continuous_simulation_timer = QTimer()
+                self.__continuous_simulation_timer.setInterval(
+                    random.randint(2000, 10000))
+                self.__continuous_simulation_timer.timeout.connect(
+                    send_simulation)
+                self.__continuous_simulation_timer.start()
 
-                self._thread_simulation = ThreadForRepeatedAction(
-                    5, send_simulation)
-                self._thread_simulation.start()
-                self._thread_simulation.join()
-
-                # wait for the signal of the end of the time
-                while self._continue:
-                    pass
+                return self.__continuous_simulation_defered
 
             # __ DISCRET __
             elif pms.DYNAMIC_TYPE == pms.DISCRETE:
@@ -140,8 +118,7 @@ class RemoteDYNCPR(IRemote):
                               pms.DECISION_STEP)))
                 logger.info(u"{} Send {}".format(self._le2mclt.uid,
                                                  extraction))
-                yield (self.server_part.callRemote(
-                    "new_extraction", extraction))
+                return send_simulation()
 
         else:
             defered = defer.Deferred()
@@ -151,7 +128,7 @@ class RemoteDYNCPR(IRemote):
             # used only in the continuous treatment
             self.new_extraction_signal.connect(ecran_decision.new_extraction)
             ecran_decision.show()
-            defer.returnValue(defered)
+            return defered
 
     def remote_update_data(self, group_members_extractions, group_extraction,
                            resource_stock):
@@ -167,40 +144,47 @@ class RemoteDYNCPR(IRemote):
         if self.currentperiod == 0:
             xdata = 0
         else:
-            xdata = (group_extraction["time"] - self.start_time).total_seconds()
+            xdata = (group_extraction["time"] - self.__start_time).total_seconds()
 
         # group extraction
-        self.extraction_group.xdata = xdata
-        self.extraction_group.ydata = group_extraction["extraction"]
+        self.__extraction_group.xdata = xdata
+        self.__extraction_group.ydata = group_extraction["extraction"]
         try:
-            self.extraction_group.update_curve()
+            self.__extraction_group.update_curve()
         except AttributeError:
             pass
 
         # resource
-        self.resource.xdata = xdata
-        self.resource.ydata = resource_stock
+        self.__resource.xdata = xdata
+        self.__resource.ydata = resource_stock
         try:
-            self.resource.update_curve()
+            self.__resource.update_curve()
         except AttributeError:
             pass
 
         # individual extractions
         for k, v in group_members_extractions.items():
-            self.extractions_indiv[k].xdata = xdata
-            self.extractions_indiv[k].ydata = v["extraction"]
+            self.__extractions_indiv[k].xdata = xdata
+            self.__extractions_indiv[k].ydata = v["extraction"]
             try:
-                self.extractions_indiv[k].update_curve()
+                self.__extractions_indiv[k].update_curve()
             # if period==0 or simulation then there is no curve
             except AttributeError:
                 pass
 
-        logger.debug("REMOTE_UPDATE_DATA - {}: Group: {} - Resource: {}".format(
-            self.le2mclt.uid, self.extraction_group.ydata, self.resource.ydata))
+        logger.debug("{} update_data: Group: {} - Resource: {}".format(
+            self.le2mclt, self.__extraction_group.ydata, self.__resource.ydata))
 
     def remote_end_update_data(self):
-        self._thread_simulation.stop()
-        self._continue = False
+        logger.debug("{}: call of remote_end_data".format(self.le2mclt))
+        self.continue_loop = False
+
+        # __ if continuous simulation __
+        try:
+            self.__continuous_simulation_timer.stop()
+            self.__continuous_simulation_defered.callback(None)
+        except AttributeError:
+            pass
 
     def remote_display_summary(self, period_content):
         """
@@ -222,11 +206,20 @@ class RemoteDYNCPR(IRemote):
             return defered
 
 
+# ==============================================================================
+# PLOT DATA
+# ==============================================================================
+
+
 class PlotData():
     def __init__(self):
         self._xdata = []
         self._ydata = []
         self._curve = None
+
+    # --------------------------------------------------------------------------
+    # PROPERTIES
+    # --------------------------------------------------------------------------
 
     @property
     def xdata(self):
@@ -251,6 +244,10 @@ class PlotData():
     @curve.setter
     def curve(self, val):
         self._curve = val
+
+    # --------------------------------------------------------------------------
+    # METHODS
+    # --------------------------------------------------------------------------
 
     def update_curve(self):
         self._curve.set_data(self._xdata, self._ydata)
