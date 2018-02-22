@@ -83,7 +83,6 @@ class RemoteDYNCPR(IRemote):
         Display the decision screen
         :return: deferred
         """
-        logger.info(u"{}: call of display_decision".format(self.le2mclt))
         self.__start_time = time_start
 
         if self._le2mclt.simulation:
@@ -96,7 +95,6 @@ class RemoteDYNCPR(IRemote):
                                                  extraction))
                 self.__server_part.callRemote("new_extraction",
                                               extraction)
-                return extraction
 
             # __ CONTINU __
             if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
@@ -116,9 +114,8 @@ class RemoteDYNCPR(IRemote):
                 extraction = float(np.random.choice(
                     np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
                               pms.DECISION_STEP)))
-                logger.info(u"{} Send {}".format(self._le2mclt.uid,
-                                                 extraction))
-                return send_simulation()
+                logger.info(u"{} Send {}".format(self.le2mclt, extraction))
+                return extraction
 
         else:
             defered = defer.Deferred()

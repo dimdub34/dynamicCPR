@@ -170,12 +170,13 @@ class Serveur(QObject):
                     self._tous, "newperiod", period))
 
                 # decision
+                time_start = datetime.now()
                 yield(self.le2mserv.gestionnaire_experience.run_step(
-                    le2mtrans(u"Decision"), self._tous, "display_decision"))
+                    "Decision", self._tous, "display_decision", time_start))
                 for g in self.__groups:
                     self.le2mserv.gestionnaire_graphique.infoserv(
-                        "G{}: {}".format(
-                            g.uid_short, g.current_extraction["extraction"]))
+                        "{}: {}".format(
+                            g, g.current_extraction["extraction"]))
 
                 # period payoffs
                 self.le2mserv.gestionnaire_experience.compute_periodpayoffs(

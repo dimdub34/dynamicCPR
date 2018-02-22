@@ -80,10 +80,12 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Decision".format(self.joueur))
         debut = datetime.now()
-        yield (self.remote.callRemote("display_decision", time_start))
+        extraction = yield (self.remote.callRemote("display_decision", time_start))
         self.currentperiod.DYNCPR_decisiontime = \
             (datetime.now() - debut).total_seconds()
         self.joueur.remove_waitmode()
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.remote_new_extraction(extraction)
 
     def remote_new_extraction(self, extraction):
         """

@@ -37,7 +37,7 @@ DECISION_STEP = 0.01
 
 PARTIE_ESSAI = False
 
-DYNAMIC_TYPE = CONTINUOUS
+DYNAMIC_TYPE = DISCRETE
 # continuous game
 CONTINUOUS_TIME_DURATION = timedelta(seconds=30)
 # refresh of the extractions and resource stock variations
