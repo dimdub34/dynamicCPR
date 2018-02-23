@@ -2,123 +2,238 @@
 """
 This module contains the GUI
 """
+
+from __future__ import division
 import sys
 import logging
 from PyQt4 import QtGui, QtCore
 from twisted.internet import defer
+import random
 
 from util.utili18n import le2mtrans
 import dynamicCPRParams as pms
 from dynamicCPRTexts import trans_DYNCPR
 import dynamicCPRTexts as texts_DYNCPR
 from client.cltgui.cltguidialogs import GuiHistorique
-from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WSpinbox,
-                                         WCompterebours, WSlider)
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WCompterebours,
+                                         WSlider)
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
 
 
 logger = logging.getLogger("le2m")
 
 
-class PlotWidget(QtGui.QWidget):
-    def __init__(self, time_duration):
-        super(PlotWidget).__init__()
+# ==============================================================================
+# WIDGETS
+# ==============================================================================
 
-        layout = QtGui.QHBoxLayout()
+
+class MySlider(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+
+        self.current_value = 0
+
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.lcd = QtGui.QLCDNumber(5)
+        self.lcd.setMode(QtGui.QLCDNumber.Dec)
+        self.lcd.setSmallDecimalPoint(True)
+        self.lcd.setSegmentStyle(QtGui.QLCDNumber.Flat)
+        self.layout.addWidget(self.lcd)
+
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider.setMinimum(pms.DECISION_MIN)
+        self.slider.setMaximum(pms.DECISION_MAX*int(1 / pms.DECISION_STEP))
+        self.slider.setTickInterval(1)
+        self.slider.setTickPosition(QtGui.QSlider.TicksBothSides)
+        self.layout.addWidget(self.slider)
+        self.slider.valueChanged.connect(self.display)
+
+        self.adjustSize()
+
+    def display(self, value):
+        self.lcd.display(value / int(1 / pms.DECISION_STEP))
+
+    def value(self):
+        return self.slider.value() / int(1 / pms.DECISION_STEP)
+
+
+# ==============================================================================
+# SCREEN FOR INITIAL EXTRACTION
+# ==============================================================================
+
+
+class GuiInitialExtraction(QtGui.QDialog):
+    def __init__(self, parent, defered, automatique):
+        QtGui.QDialog.__init__(self, parent)
+
+        self.defered = defered
+        self.automatique = automatique
+
+        layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
 
-        self.plot_extraction = PlotExtraction(time_duration=time_duration)
-        layout.addWidget(self.plot_extraction)
+        explanation_area = WExplication(
+            parent=self, text=texts_DYNCPR.INITIAL_EXTRACTION)
+        layout.addWidget(explanation_area)
 
-        self.plot_resource = PlotRessource(time_duration=time_duration)
-        layout.addWidget(self.plot_resource)
+        self.slider_area = MySlider()
+        layout.addWidget(self.slider_area)
+
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        buttons.accepted.connect(self._accept)
+        layout.addWidget(buttons)
+
+        self.setWindowTitle("Decision")
+        self.adjustSize()
+        self.setFixedSize(self.size())
+
+        if self.automatique:
+            self.slider_area.slider.setValue(random.randint(
+                pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
+            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique.timeout.connect(
+                buttons.button(QtGui.QDialogButtonBox.Ok).click)
+            self.timer_automatique.start(7000)
+
+    def _accept(self):
+        try:
+            self.timer_automatique.stop()
+        except AttributeError:
+            pass
+        val = self.slider_area.slider.value() / int(1/pms.DECISION_STEP)
+        if not self.automatique:
+            confirmation = QtGui.QMessageBox.question(
+                self, "Confirmation", trans_DYNCPR(u"Do you confirm your choice?"),
+                QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
+            if confirmation != QtGui.QMessageBox.Yes:
+                return
+        self.accept()
+        logger.info("send {}".format(val))
+        self.defered.callback(val)
+
+    def reject(self):
+        pass
 
 
-class PlotExtraction(FigureCanvas):
-    def __init__(self, remote, time_duration):
-        """
+# ==============================================================================
+# WIDGETS FOR THE GRAPHS
+# ==============================================================================
 
-        :param remote:
-        :param time_duration: in order to set the abscissa of the graph
-        """
-        self.remote = remote
+
+class PlotExtraction(QtGui.QWidget):
+    """
+    This widget plot the individual extractions
+    """
+    def __init__(self, individual_extractions):
+        QtGui.QWidget.__init__(self)
+
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
 
         self.fig = plt.figure(figsize=(10, 7))
-        FigureCanvas.__init__(self, self.fig)
+        self.canvas = FigureCanvas(self.fig)
+        layout.addWidget(self.canvas)
 
         self.graph = self.fig.add_subplot(111)
-        self.graph.set_xlim(-5, time_duration + 5)
-        self.graph.set_xlabel(trans_DYNCPR("Time (seconds)"))
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.graph.set_xlim(0, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
+            self.graph.set_xticks(range(1, pms.NOMBRE_PERIODES + 1))
+        elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.graph.set_xlim(-5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
+            self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
         self.graph.set_ylim(-1, 22)
         self.graph.set_yticks(range(0, 21, 5))
-        self.graph.set_ylabel(trans_DYNCPR("Extraction"))
+        self.graph.set_ylabel(trans_DYNCPR(u"Extraction"))
         self.graph.legend(loc="upper left", ncol=pms.TAILLE_GROUPES,
                           fontsize=10)
-        self.graph.set_title(trans_DYNCPR("Individual extraction"))
+        self.graph.set_title(trans_DYNCPR(u"Individual extractions"))
         self.graph.grid()
 
         # init the curve
-        for k, v in self.remote.extractions.items():
+        for k, v in individual_extractions.items():
             v.curve = self.graph.plot(v.xdata, v.ydata, label=k)
 
+        self.canvas.draw()
 
-class PlotRessource(FigureCanvas):
+
+class PlotResource(QtGui.QWidget):
     """
     Display the curves with the total extraction of the group and the curve of
     the stock of resource
     """
-    def __init__(self, time_duration, extraction_group, resource):
-        """
-        :param remote
-        :param time_duration: needed to set the abscissa axis
-        """
+    def __init__(self, extraction_group, resource):
+        QtGui.QWidget.__init__(self)
+
         self.extraction_group = extraction_group
         self.resource = resource
 
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
+
         self.fig = plt.figure(figsize=(10, 7))
-        FigureCanvas.__init__(self, self.fig)
+        self.canvas = FigureCanvas(self.fig)
+        layout.addWidget(self.canvas)
 
         self.graph = self.fig.add_subplot(111)
-        self.graph.set_xlim(-5, time_duration + 5)
-        self.graph.set_xlabel(trans_DYNCPR("Time (seconds)"))
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.graph.set_xlim(0, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
+            self.graph.set_xticks(range(1, pms.NOMBRE_PERIODES + 1))
+        elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.graph.set_xlim(-5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
+            self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
         self.graph.set_ylim(-5, 125)
-        self.graph.set_ylabel(trans_DYNCPR("Stock of resource"))
-        self.graph.legend(loc=9, ncol=2, fontsize=10)
-        self.graph.set_title(trans_DYNCPR("Group extraction and stock of resource"))
+        self.graph.set_ylabel(trans_DYNCPR(u"Stock of resource"))
+        self.graph.legend(loc="lower left", ncol=2, fontsize=10)
+        self.graph.set_title(
+            trans_DYNCPR(u"Group extraction and stock of resource"))
         self.graph.grid()
 
         # group extraction
         self.extraction_group.curve = self.graph.plot(
             self.extraction_group.xdata, self.extraction_group.ydata,
-            "-k", label=trans_DYNCPR("Group extraction"))
+            "-k", label=trans_DYNCPR(u"Group extraction"))
 
         # stock of resource
         self.resource.curve = self.graph.plot(
             self.resource.xdata, self.resource.ydata,
-            "-g", label=trans_DYNCPR("Stock of resource"))
+            "-g", label=trans_DYNCPR(u"Stock of resource"))
 
-    def update_resource(self):
-        self.resource.curve.set_data(
-            self.resource.xdata, self.resource.ydata)
-        self.fig.canvas.draw()
+        self.canvas.draw()
+
+
+# ==============================================================================
+# DECISION SCREEN
+# ==============================================================================
 
 
 class GuiDecision(QtGui.QDialog):
-    def __init__(self, defered, automatique, parent, period, historique):
+    def __init__(self, defered, automatique, parent, period, historique,
+                 individual_extractions, group_extraction, resource):
         super(GuiDecision, self).__init__(parent)
 
         # variables
-        self._defered = defered
-        self._automatique = automatique
-        self._historique = GuiHistorique(self, historique)
+        self.defered = defered
+        self.automatique = automatique
+        self.historique = GuiHistorique(self, historique)
+        self.individual_extractions = individual_extractions
+        self.group_extraction = group_extraction
+        self.resource = resource
 
         layout = QtGui.QVBoxLayout(self)
 
-        # should be removed if one-shot game
-        wperiod = WPeriod(
-            period=period, ecran_historique=self._historique)
-        layout.addWidget(wperiod)
+        # ----------------------------------------------------------------------
+        # HEAD AREA
+        # ----------------------------------------------------------------------
+
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            wperiod = WPeriod(period, self.historique)
+            layout.addWidget(wperiod)
 
         wexplanation = WExplication(
             text=texts_DYNCPR.get_text_explanation(),
@@ -130,14 +245,27 @@ class GuiDecision(QtGui.QDialog):
                 self, pms.CONTINUOUS_TIME_DURATION, self._accept)
             layout.addWidget(wtimer)
 
-        self.graphical_zone = PlotWidget()
-        layout.addWidget(self.graphical_zone)
+        # ----------------------------------------------------------------------
+        # GRAPHICAL AREA
+        # ----------------------------------------------------------------------
 
-        self.extract_dec = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.extract_dec.setMinimum(pms.DECISION_MIN)
-        self.extract_dec.setMaximum(pms.DECISION_MAX)
-        self.extract_dec.sliderReleased.connect(lambda _: self.send_extraction())
+        layout_plot = QtGui.QHBoxLayout()
+        layout.addLayout(layout_plot)
+        self.plot_extraction = PlotExtraction(self.individual_extractions)
+        layout_plot.addWidget(self.plot_extraction)
+        self.plot_resource = PlotResource(self.group_extraction, self.resource)
+        layout_plot.addWidget(self.plot_resource)
+
+        # ----------------------------------------------------------------------
+        # DECISION AREA
+        # ----------------------------------------------------------------------
+
+        self.extract_dec = MySlider()
         layout.addWidget(self.extract_dec)
+
+        # ----------------------------------------------------------------------
+        # FOOT AREA
+        # ----------------------------------------------------------------------
 
         buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
         buttons.accepted.connect(self._accept)
@@ -153,7 +281,7 @@ class GuiDecision(QtGui.QDialog):
             self._timer_continuous.setSingleShot(False)
             self._timer_continuous.start(1000)
 
-        if self._automatique:
+        if self.automatique:
             self._timer_automatique = QtCore.QTimer()
             self._timer_automatique.timeout.connect(
                 buttons.button(QtGui.QDialogButtonBox.Ok).click)
@@ -167,26 +295,27 @@ class GuiDecision(QtGui.QDialog):
             self._timer_automatique.stop()
         except AttributeError:
             pass
-        decision = self._wdecision.get_value()
-        if not self._automatique:
+        extraction = self.extract_dec.value()
+        if not self.automatique:
             confirmation = QtGui.QMessageBox.question(
                 self, le2mtrans(u"Confirmation"),
                 le2mtrans(u"Do you confirm your choice?"),
                 QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
             if confirmation != QtGui.QMessageBox.Yes: 
                 return
-        logger.info(u"Send back {}".format(decision))
+        logger.info(u"Send {}".format(extraction))
         self.accept()
-        self._defered.callback(decision)
-
-    def update_graphs(self):
-        self.graphical_zone.plot_extraction.fig.canvas.draw()
-        self.graphical_zone.plot_resource.fig.canvas.draw()
+        self.defered.callback(extraction)
 
     @defer.inlineCallbacks
     def send_extraction(self):
         yield (self.remote.server_part.callRemote(
             "new_extraction", self.extract_dec.value()))
+
+
+# ==============================================================================
+# CONFIGURATION SCREEN
+# ==============================================================================
 
 
 class DConfigure(QtGui.QDialog):
@@ -261,7 +390,7 @@ class TestSlider(QtGui.QDialog):
         layout = QtGui.QVBoxLayout(self)
         self.extract_dec = WSlider(
             parent=self, label=trans_DYNCPR(u"Your extraction"),
-            minimum=pms.DECISION_MIN, maximum=pms.DECISION_MAX,
+            minimum=pms.DECISION_MIN, maximum=pms.DECISION_MAX*100,
             interval=pms.DECISION_STEP
         )
         layout.addWidget(self.extract_dec)
@@ -269,6 +398,15 @@ class TestSlider(QtGui.QDialog):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    test_slider = TestSlider()
+    def display(what):
+        print(what)
+    # test_slider = TestSlider()
+    test_slider = MySlider()
+    timer = QtCore.QTimer()
+    timer.timeout.connect(lambda: display(test_slider.value()))
+    timer.start(1000)
+    def stop():
+        timer.stop()
+    QtCore.QTimer.singleShot(10000, stop)
     test_slider.show()
     sys.exit(app.exec_())

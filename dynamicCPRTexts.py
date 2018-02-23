@@ -22,6 +22,12 @@ except (AttributeError, IOError):
     trans_DYNCPR = lambda x: x  # if there is an error, no translation
 
 
+INITIAL_EXTRACTION = trans_DYNCPR(
+    u"Please choose an initial extraction value"
+)
+
+
+
 def get_histo_vars():
     return ["DYNCPR_period", "DYNCPR_decision",
             "DYNCPR_periodpayoff",

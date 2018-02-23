@@ -69,7 +69,10 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         game
         :return:
         """
-        yield (self.remote.callRemote("set_initial_extraction"))
+        initial_extraction = yield (self.remote.callRemote(
+            "set_initial_extraction"))
+        self.remote_new_extraction(initial_extraction)
+        self.joueur.remove_waitmode()
 
     @defer.inlineCallbacks
     def display_decision(self, time_start):

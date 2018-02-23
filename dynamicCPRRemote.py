@@ -10,7 +10,7 @@ from client.cltremote import IRemote
 from client.cltgui.cltguidialogs import GuiRecapitulatif
 
 import dynamicCPRParams as pms
-from dynamicCPRGui import GuiDecision
+from dynamicCPRGui import GuiDecision, GuiInitialExtraction
 import dynamicCPRTexts as texts_DYNCPR
 
 
@@ -32,6 +32,25 @@ class RemoteDYNCPR(IRemote):
         # used for continuous time
         # ----------------------------------------------------------------------
         self.__start_time = None
+
+    # --------------------------------------------------------------------------
+    # PROPERTIES
+    # --------------------------------------------------------------------------
+    @property
+    def individual_extractions(self):
+        return self.__extractions_indiv
+
+    @property
+    def group_extraction(self):
+        return self.__extraction_group
+
+    @property
+    def resource(self):
+        return self.__resource
+
+    # --------------------------------------------------------------------------
+    # METHODS
+    # --------------------------------------------------------------------------
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -61,7 +80,6 @@ class RemoteDYNCPR(IRemote):
             self.histo_vars = texts_DYNCPR.get_histo_vars()
             self.histo.append(texts_DYNCPR.get_histo_head())
 
-    @defer.inlineCallbacks
     def remote_set_initial_extraction(self):
         """
         the player set his initial extraction, before to start the game
@@ -71,12 +89,14 @@ class RemoteDYNCPR(IRemote):
             extraction = float(np.random.choice(
                 np.arange(pms.DECISION_MIN, pms.DECISION_MAX,
                           pms.DECISION_STEP)))
-            logger.info(u"{} Send {}".format(self._le2mclt.uid,
-                                             extraction))
-            yield (self.__server_part.callRemote(
-                "new_extraction", extraction))
+            logger.info(u"{} Send {}".format(self.le2mclt, extraction))
+            return extraction
         else:
-            pass  # todo: display a screen
+            defered = defer.Deferred()
+            screen = GuiInitialExtraction(
+                self.le2mclt.screen, defered, self.le2mclt.automatique)
+            screen.show()
+            return defered
 
     def remote_display_decision(self, time_start):
         """
@@ -120,10 +140,9 @@ class RemoteDYNCPR(IRemote):
         else:
             defered = defer.Deferred()
             ecran_decision = GuiDecision(
-                defered, self._le2mclt.automatique,
-                self._le2mclt.screen, self.currentperiod, self.histo)
-            # used only in the continuous treatment
-            self.new_extraction_signal.connect(ecran_decision.new_extraction)
+                defered, self.le2mclt.automatique,
+                self.le2mclt.screen, self.currentperiod, self.histo,
+                self.individual_extractions, self.group_extraction, self.resource)
             ecran_decision.show()
             return defered
 
