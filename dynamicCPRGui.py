@@ -139,26 +139,30 @@ class PlotExtraction(QtGui.QWidget):
         layout.addWidget(self.canvas)
 
         self.graph = self.fig.add_subplot(111)
+
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            self.graph.set_xlim(0, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(1, pms.NOMBRE_PERIODES + 1))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
+            for k, v in individual_extractions.items():
+                self.graph.plot(v.xdata, v.ydata, ls="-", label=k, marker="*")
+
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(-5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-        self.graph.set_ylim(-1, 22)
+            for k, v in individual_extractions.items():
+                if v.curve is None:
+                    v.curve = self.graph.plot(
+                        v.xdata, v.ydata, ls="-", label=k, marker="*")
+
+        self.graph.set_ylim(-5, 25)
         self.graph.set_yticks(range(0, 21, 5))
         self.graph.set_ylabel(trans_DYNCPR(u"Extraction"))
-        self.graph.legend(loc="upper left", ncol=pms.TAILLE_GROUPES,
-                          fontsize=10)
         self.graph.set_title(trans_DYNCPR(u"Individual extractions"))
         self.graph.grid()
-
-        # init the curve
-        for k, v in individual_extractions.items():
-            v.curve = self.graph.plot(v.xdata, v.ydata, label=k)
-
-        self.canvas.draw()
+        self.graph.legend(loc="lower left", ncol=pms.TAILLE_GROUPES,
+                          fontsize=10)
+        self.fig.canvas.draw()
 
 
 class PlotResource(QtGui.QWidget):
@@ -180,31 +184,38 @@ class PlotResource(QtGui.QWidget):
         layout.addWidget(self.canvas)
 
         self.graph = self.fig.add_subplot(111)
+
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            self.graph.set_xlim(0, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(1, pms.NOMBRE_PERIODES + 1))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
+            self.graph.plot(
+                self.extraction_group.xdata, self.extraction_group.ydata,
+                "-*k", label=trans_DYNCPR(u"Group extraction"))
+            self.graph.plot(
+                self.resource.xdata, self.resource.ydata,
+                "-*g", label=trans_DYNCPR(u"Stock of resource"))
+
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(-5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
+            if self.extraction_group.curve is None:
+                self.extraction_group.curve = self.graph.plot(
+                    self.extraction_group.xdata, self.extraction_group.ydata,
+                    "-*k", label=trans_DYNCPR(u"Group extraction"))
+            if self.resource.curve is None:
+                self.resource.curve = self.graph.plot(
+                    self.resource.xdata, self.resource.ydata,
+                    "-*g", label=trans_DYNCPR(u"Stock of resource"))
+
         self.graph.set_ylim(-5, 125)
+        self.graph.set_yticks(range(0, 121, 10))
         self.graph.set_ylabel(trans_DYNCPR(u"Stock of resource"))
-        self.graph.legend(loc="lower left", ncol=2, fontsize=10)
         self.graph.set_title(
             trans_DYNCPR(u"Group extraction and stock of resource"))
         self.graph.grid()
-
-        # group extraction
-        self.extraction_group.curve = self.graph.plot(
-            self.extraction_group.xdata, self.extraction_group.ydata,
-            "-k", label=trans_DYNCPR(u"Group extraction"))
-
-        # stock of resource
-        self.resource.curve = self.graph.plot(
-            self.resource.xdata, self.resource.ydata,
-            "-g", label=trans_DYNCPR(u"Stock of resource"))
-
-        self.canvas.draw()
+        self.graph.legend(loc="lower left", ncol=2, fontsize=10)
+        self.fig.canvas.draw()
 
 
 # ==============================================================================
@@ -282,6 +293,8 @@ class GuiDecision(QtGui.QDialog):
             self._timer_continuous.start(1000)
 
         if self.automatique:
+            self.extract_dec.slider.setValue(random.randint(
+                pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
             self._timer_automatique = QtCore.QTimer()
             self._timer_automatique.timeout.connect(
                 buttons.button(QtGui.QDialogButtonBox.Ok).click)

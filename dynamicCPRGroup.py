@@ -31,7 +31,7 @@ class GroupDYNCPR(Base):
         self.__current_resource = pms.RESOURCE_INITIAL_STOCK
         self.__timer_update = QTimer()
         self.__timer_update.setInterval(1000)
-        self.__timer_update.timeout.connect(self.__update_data)
+        self.__timer_update.timeout.connect(self.update_data)
 
     # --------------------------------------------------------------------------
     # PROPERTIES
@@ -80,7 +80,7 @@ class GroupDYNCPR(Base):
     # METHODS
     # --------------------------------------------------------------------------
 
-    def __update_data(self):
+    def update_data(self):
         self.__current_resource *= pms.RESOURCE_GROWTH_RATE
         self.__current_resource -= self.__current_extraction.DYNCPR_group_extraction
         logger.debug("{} update_data extraction {} - resource {}".format(
@@ -95,8 +95,7 @@ class GroupDYNCPR(Base):
 
         :param player: the player at the origin of the extraction
         :param extraction: the amount extracted (Float)
-        :param period: if discret, the period number. If continuous call the
-        method without this arg
+        :param period: the period number
         :return:
         """
         self.__current_players_extractions[player] = extraction.to_dict()

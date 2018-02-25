@@ -50,6 +50,10 @@ class Serveur(QObject):
     def le2mserv(self):
         return self.__le2mserv
 
+    # --------------------------------------------------------------------------
+    # METHODS
+    # --------------------------------------------------------------------------
+
     def _configure(self):
         screen_conf = DConfigure(self.le2mserv.gestionnaire_graphique.screen)
         if screen_conf.exec_():
@@ -116,14 +120,16 @@ class Serveur(QObject):
 
         self.le2mserv.gestionnaire_graphique.infoclt(trans_DYNCPR(
             u"Initial extraction"))
-        yield (self.le2mserv.gestionnaire_experience.run_func(
-            self._tous, "newperiod", 0))
+        self.le2mserv.gestionnaire_experience.run_func(
+            self._tous, "newperiod", 0)
         yield (self.le2mserv.gestionnaire_experience.run_step(
             trans_DYNCPR(u"Initial extraction"), self._tous,
             "set_initial_extraction"))
         for g in self.__groups:
             self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
                 g.uid_short, g.current_extraction["extraction"]))
+        self.le2mserv.gestionnaire_experience.run_func(
+            self.__groups, "update_data")
 
         # ----------------------------------------------------------------------
         # DEPENDS ON TREATMENT
@@ -177,6 +183,9 @@ class Serveur(QObject):
                 # period payoffs
                 self.le2mserv.gestionnaire_experience.compute_periodpayoffs(
                     "dynamicCPR")
+
+                self.le2mserv.gestionnaire_experience.run_func(
+                    self.__groups, "update_data")
         
         # summary
         yield(self.le2mserv.gestionnaire_experience.run_step(

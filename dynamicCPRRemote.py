@@ -24,14 +24,13 @@ class RemoteDYNCPR(IRemote):
     def __init__(self, le2mclt):
         IRemote.__init__(self, le2mclt)
         self.__extractions_indiv = dict()
+
+    def __init_vars(self):
+        self.__start_time = None
         self.__extraction_group = PlotData()
         self.__resource = PlotData()
-        self.__resource.xdata = 0
-        self.__resource.ydata = pms.RESOURCE_INITIAL_STOCK
-        # ---------------------------------------------------------------------
-        # used for continuous time
-        # ----------------------------------------------------------------------
-        self.__start_time = None
+        for j in self.__group_members:
+            self.__extractions_indiv[j] = PlotData()
 
     # --------------------------------------------------------------------------
     # PROPERTIES
@@ -63,9 +62,7 @@ class RemoteDYNCPR(IRemote):
         self.__group_members = group_members
         for k, v in params.items():
             setattr(pms, k, v)
-        # we create a data plot for each group member
-        for j in self.__group_members:
-            self.__extractions_indiv[j] = PlotData()
+        self.__init_vars()
 
     def remote_newperiod(self, period):
         """
@@ -160,28 +157,38 @@ class RemoteDYNCPR(IRemote):
         if self.currentperiod == 0:
             xdata = 0
         else:
-            xdata = (group_extraction["time"] - self.__start_time).total_seconds()
+            if pms.DYNAMIC_TYPE == pms.DISCRETE:
+                xdata = self.currentperiod
+            elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+                xdata = (group_extraction["time"] -
+                         self.__start_time).total_seconds()
 
         # group extraction
-        self.__extraction_group.xdata = xdata
-        self.__extraction_group.ydata = group_extraction["extraction"]
+        self.__extraction_group.xdata.append(xdata)
+        self.__extraction_group.ydata.append(group_extraction["extraction"])
         try:
             self.__extraction_group.update_curve()
         except AttributeError:
             pass
+        logger.debug("extraction_group: xdata: {}, ydata: {}, curve: {}".format(
+            self.__extraction_group.xdata, self.__extraction_group.ydata,
+            self.__extraction_group.curve))
 
         # resource
-        self.__resource.xdata = xdata
-        self.__resource.ydata = resource_stock
+        self.__resource.xdata.append(xdata)
+        self.__resource.ydata.append(resource_stock)
         try:
             self.__resource.update_curve()
         except AttributeError:
             pass
+        logger.debug("resource: xdata: {}, ydata: {}, curve: {}".format(
+            self.__resource.xdata, self.__resource.ydata,
+            self.__resource.curve))
 
         # individual extractions
         for k, v in group_members_extractions.items():
-            self.__extractions_indiv[k].xdata = xdata
-            self.__extractions_indiv[k].ydata = v["extraction"]
+            self.__extractions_indiv[k].xdata.append(xdata)
+            self.__extractions_indiv[k].ydata.append(v["extraction"])
             try:
                 self.__extractions_indiv[k].update_curve()
             # if period==0 or simulation then there is no curve
@@ -229,43 +236,28 @@ class RemoteDYNCPR(IRemote):
 
 class PlotData():
     def __init__(self):
-        self._xdata = []
-        self._ydata = []
-        self._curve = None
+        self.xdata = []
+        self.ydata = []
+        self.__curve = None
 
     # --------------------------------------------------------------------------
     # PROPERTIES
     # --------------------------------------------------------------------------
 
-    @property
-    def xdata(self):
-        return self._xdata
-
-    @xdata.setter
-    def xdata(self, val):
-        self._xdata.append(val)
-
-    @property
-    def ydata(self):
-        return self._ydata
-
-    @ydata.setter
-    def ydata(self, val):
-        self._ydata.append(val)
 
     @property
     def curve(self):
-        return self._curve
+        return self.__curve
 
     @curve.setter
     def curve(self, val):
-        self._curve = val
+        self.__curve = val
 
     # --------------------------------------------------------------------------
     # METHODS
     # --------------------------------------------------------------------------
 
     def update_curve(self):
-        self._curve.set_data(self._xdata, self._ydata)
+        self.__curve.set_data(self.xdata, self.ydata)
 
 

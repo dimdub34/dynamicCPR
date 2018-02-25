@@ -49,7 +49,7 @@ DISCRETE_DECISION_TIME = timedelta(minutes=1)
 # RESOURCE
 # ------------------------------------------------------------------------------
 RESOURCE_INITIAL_STOCK = 100
-RESOURCE_GROWTH_RATE = 0.2
+RESOURCE_GROWTH_RATE = 1.2
 
 
 

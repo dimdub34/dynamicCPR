@@ -165,6 +165,16 @@ class QCustomSlider(QWidget):
 #         time.sleep(1)
 #         i += 1
 
+class MyTest():
+    def __init__(self):
+        self.__my_list = []
+
+    @property
+    def my_list(self):
+        return self.__my_list
+
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     wslider = QCustomSlider(QtCore.Qt.Horizontal)
