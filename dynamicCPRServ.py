@@ -9,7 +9,7 @@ from PyQt4.QtGui import QMessageBox
 
 from util import utiltools
 from util.utili18n import le2mtrans
-from util.utiltools import get_module_attributes
+from util.utiltools import get_module_attributes, timedelta_to_time
 
 import dynamicCPRParams as pms
 from dynamicCPRGui import DConfigure
@@ -59,9 +59,11 @@ class Serveur(QObject):
         if screen_conf.exec_():
             pms_list = []
             for k, v in get_module_attributes(pms).items():
-                if k in ["TREATMENT", "DYNAMIC_TYPE", "NOMBRE_PERIODES",
-                         "PARTIE_ESSAI"]:
+                if k in ["DYNAMIC_TYPE", "NOMBRE_PERIODES", "PARTIE_ESSAI"]:
                     pms_list.append("{}: {}".format(k, v))
+            continuous_time_duration = timedelta_to_time(pms.CONTINUOUS_TIME_DURATION)
+            pms_list.append("CONTINUOUS_TIME_DURATION: {}".format(
+                continuous_time_duration.strftime("%H:%M:%S")))
             self.le2mserv.gestionnaire_graphique.infoserv(pms_list)
 
     @defer.inlineCallbacks
@@ -127,7 +129,7 @@ class Serveur(QObject):
             "set_initial_extraction"))
         for g in self.__groups:
             self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
-                g.uid_short, g.current_extraction["extraction"]))
+                g.uid_short, g.current_extraction))
         self.le2mserv.gestionnaire_experience.run_func(
             self.__groups, "update_data")
 

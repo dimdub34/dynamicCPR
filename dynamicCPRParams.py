@@ -18,16 +18,16 @@ BASELINE = 0
 TREATMENTS_NAMES = {BASELINE: "Baseline"}
 CONTINUOUS = 0
 DISCRETE = 1
-IMPULSORY = 2
+IMPULSORY = 2  # future
 
 # ------------------------------------------------------------------------------
 # PARAMETERS
 # ------------------------------------------------------------------------------
 
-TREATMENT = BASELINE
+TREATMENT = BASELINE  # for future treatments
 TAUX_CONVERSION = 1
-NOMBRE_PERIODES = 2
-TAILLE_GROUPES = 2
+NOMBRE_PERIODES = 2  # only for dynamic == discrete
+TAILLE_GROUPES = 2  # should not be changed without asking Dimitri
 MONNAIE = u"ecu"
 
 # DECISION
@@ -37,13 +37,13 @@ DECISION_STEP = 0.01
 
 PARTIE_ESSAI = False
 
-DYNAMIC_TYPE = DISCRETE
+DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = timedelta(seconds=30)
-# refresh of the extractions and resource stock variations
-CONTINUOUS_REFRESH = timedelta(seconds=5)
+CONTINUOUS_TIME_DURATION = timedelta(minutes=2)  # can be changed in config screen
 # time for the player to take a decision
 DISCRETE_DECISION_TIME = timedelta(minutes=1)
+# milliseconds
+TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 
 # ------------------------------------------------------------------------------
 # RESOURCE

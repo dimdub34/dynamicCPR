@@ -2,11 +2,20 @@
 import sys
 import threading
 from PyQt4.QtCore import QThread
+import datetime
 import time
 from PyQt4 import QtCore
 from PyQt4.QtGui import (QApplication, QSlider, QWidget, QVBoxLayout,
-                         QHBoxLayout, QLabel)
+                         QHBoxLayout, QLabel, QPushButton)
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
+import random
 
+
+def timedelta_to_time(the_timedelta):
+    hours, remainder = map(int, divmod(the_timedelta.total_seconds(), 3600))
+    minutes, seconds = map(int, divmod(remainder, 60))
+    return datetime.time(hours, minutes, seconds)
 
 
 class ThreadForRepeatedAction(threading.Thread):
@@ -174,13 +183,48 @@ class MyTest():
         return self.__my_list
 
 
+class MyPlotWidget(QWidget):
+    def __init__(self):
+        super(MyPlotWidget, self).__init__()
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.fig = plt.Figure(figsize=(10, 7))
+        self.canvas = FigureCanvas(self.fig)
+        layout.addWidget(self.canvas)
+
+        self.graph = self.fig.add_subplot(111)
+        self.graph.set_xlim(0, 50)
+        self.graph.set_ylim(0, 50)
+        self.xdata = [0]
+        self.ydata = [random.randint(0, 50)]
+        self.curve, = self.graph.plot(self.xdata, self.ydata, "-*b")
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_graph)
+        self.timer.start(2000)
+
+        self.button = QPushButton("Stop")
+        self.button.clicked.connect(self.timer.stop)
+        layout.addWidget(self.button)
+
+    def update_graph(self):
+        self.xdata.append(self.xdata[-1] + 1)
+        self.ydata.append(random.randint(0, 50))
+        self.curve.set_data(self.xdata, self.ydata)
+        self.canvas.draw()
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    wslider = QCustomSlider(QtCore.Qt.Horizontal)
-    wslider.setTickLabels(range(0, 101, 5))
-    wslider.setRange(0, 101)
-    wslider.setTickInterval(5)
-    wslider.setTickPosition(QSlider.TicksBothSides)
-    wslider.show()
+    # wslider = QCustomSlider(QtCore.Qt.Horizontal)
+    # wslider.setTickLabels(range(0, 101, 5))
+    # wslider.setRange(0, 101)
+    # wslider.setTickInterval(5)
+    # wslider.setTickPosition(QSlider.TicksBothSides)
+    # wslider.show()
+    myplot = MyPlotWidget()
+    myplot.show()
     sys.exit(app.exec_())
