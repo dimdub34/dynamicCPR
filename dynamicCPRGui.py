@@ -309,7 +309,8 @@ class GuiDecision(QtGui.QDialog):
             self.timer_continuous = QtCore.QTimer()
             self.timer_continuous.timeout.connect(
                 self.send_data_and_update_graphs)
-            self.timer_continuous.start(int(pms.TIMER_UPDATE.total_seconds()))
+            self.timer_continuous.start(
+                int(pms.TIMER_UPDATE.total_seconds())*1000)
             signal_end_of_time.connect(self.end_of_time)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE and self.automatique:
