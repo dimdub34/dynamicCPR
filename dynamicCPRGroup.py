@@ -75,7 +75,7 @@ class GroupDYNCPR(Base):
     # --------------------------------------------------------------------------
 
     def update_data(self):
-        self.current_resource *= pms.RESOURCE_GROWTH_RATE
+        self.current_resource += pms.RESOURCE_GROWTH
         self.current_resource -= self.current_extraction.DYNCPR_group_extraction
         if self.current_resource < 0:
             self.current_resource = 0
