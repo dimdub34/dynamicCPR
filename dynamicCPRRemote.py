@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 
+# built-in
 import logging
 import random
 from twisted.internet import defer
 import numpy as np
 from PyQt4.QtCore import QTimer, pyqtSignal, QObject
 
+# le2m
 from client.cltremote import IRemote
-from client.cltgui.cltguidialogs import GuiRecapitulatif
 
+# dynamicCPR
 import dynamicCPRParams as pms
-from dynamicCPRGui import GuiDecision, GuiInitialExtraction
+from dynamicCPRGui import GuiDecision, GuiInitialExtraction, GuiSummary
 import dynamicCPRTexts as texts_DYNCPR
 
 
@@ -72,8 +74,7 @@ class RemoteDYNCPR(IRemote, QObject):
             return extraction
         else:
             defered = defer.Deferred()
-            screen = GuiInitialExtraction(
-                self.le2mclt.screen, defered, self.le2mclt.automatique)
+            screen = GuiInitialExtraction(self, defered)
             screen.show()
             return defered
 
@@ -133,11 +134,7 @@ class RemoteDYNCPR(IRemote, QObject):
 
         else:
             defered = defer.Deferred()
-            dec_screen = GuiDecision(
-                self, defered, self.le2mclt.automatique,
-                self.le2mclt.screen, self.currentperiod, self.histo,
-                self.extractions_indiv, self.extraction_group,
-                self.resource, self.end_of_time)
+            dec_screen = GuiDecision(self, defered)
             dec_screen.show()
             return defered
 
@@ -235,11 +232,8 @@ class RemoteDYNCPR(IRemote, QObject):
             return 1
         else:
             defered = defer.Deferred()
-            ecran_recap = GuiRecapitulatif(
-                defered, self._le2mclt.automatique, self._le2mclt.screen,
-                self.currentperiod, self.histo,
-                texts_DYNCPR.get_text_summary(period_content))
-            ecran_recap.show()
+            summary_screen = GuiSummary(self, defered)
+            summary_screen.show()
             return defered
 
 

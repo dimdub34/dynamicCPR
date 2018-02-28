@@ -1,25 +1,37 @@
 # -*- coding: utf-8 -*-
+
 """
-This module contains the GUI
+# ==============================================================================
+#
+# This module contains the GUI
+#
+# ==============================================================================
 """
 
+# ==============================================================================
+# IMPORTS
+# ==============================================================================
+# built-in
 from __future__ import division
-import sys
 import logging
 from PyQt4 import QtGui, QtCore
 import random
-from datetime import time, timedelta
+from datetime import timedelta
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
 
+# le2m
 from util.utili18n import le2mtrans
 from util.utiltools import timedelta_to_time
+from client.cltgui.cltguidialogs import GuiHistorique
+from client.cltgui.cltguitablemodels import TableModelHistorique
+from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WCompterebours,
+                                         WTableview)
+
+# dynamicCPR
 import dynamicCPRParams as pms
 from dynamicCPRTexts import trans_DYNCPR
 import dynamicCPRTexts as texts_DYNCPR
-from client.cltgui.cltguidialogs import GuiHistorique
-from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WCompterebours,
-                                         WSlider)
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-import matplotlib.pyplot as plt
 
 
 logger = logging.getLogger("le2m")
@@ -66,7 +78,7 @@ class PlotExtraction(QtGui.QWidget):
     """
     This widget plot the individual extractions
     """
-    def __init__(self, cltuid, individual_extractions):
+    def __init__(self, cltuid, extractions_indiv):
         QtGui.QWidget.__init__(self)
 
         layout = QtGui.QVBoxLayout()
@@ -82,7 +94,7 @@ class PlotExtraction(QtGui.QWidget):
             self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
             self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
-            for k, v in individual_extractions.items():
+            for k, v in extractions_indiv.items():
                 if k == cltuid:
                     lab = trans_DYNCPR(u"Me")
                 else:
@@ -95,7 +107,7 @@ class PlotExtraction(QtGui.QWidget):
             self.graph.set_xticks(
                 range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-            for k, v in individual_extractions.items():
+            for k, v in extractions_indiv.items():
                 if k == cltuid:
                     lab = trans_DYNCPR(u"Me")
                 else:
@@ -160,7 +172,7 @@ class PlotResource(QtGui.QWidget):
                     self.resource.xdata, self.resource.ydata,
                     "-g", label=trans_DYNCPR(u"Stock of resource"))
 
-        self.graph.set_ylim(-5, 125)
+        self.graph.set_ylim(-15, 130)
         self.graph.set_yticks(range(0, 121, 10))
         self.graph.set_ylabel(trans_DYNCPR(u"Stock of resource"))
         self.graph.set_title(
@@ -176,11 +188,11 @@ class PlotResource(QtGui.QWidget):
 
 
 class GuiInitialExtraction(QtGui.QDialog):
-    def __init__(self, parent, defered, automatique):
-        QtGui.QDialog.__init__(self, parent)
+    def __init__(self, remote, defered):
+        QtGui.QDialog.__init__(self, remote.le2mclt.screen)
 
+        self.remote = remote
         self.defered = defered
-        self.automatique = automatique
 
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
@@ -200,7 +212,7 @@ class GuiInitialExtraction(QtGui.QDialog):
         self.adjustSize()
         self.setFixedSize(self.size())
 
-        if self.automatique:
+        if self.remote.le2mclt.automatique:
             self.slider_area.slider.setValue(random.randint(
                 pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
             self.timer_automatique = QtCore.QTimer()
@@ -214,7 +226,7 @@ class GuiInitialExtraction(QtGui.QDialog):
         except AttributeError:
             pass
         val = self.slider_area.slider.value() / int(1/pms.DECISION_STEP)
-        if not self.automatique:
+        if not self.remote.le2mclt.automatique:
             confirmation = QtGui.QMessageBox.question(
                 self, "Confirmation", trans_DYNCPR(u"Do you confirm your choice?"),
                 QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
@@ -234,21 +246,15 @@ class GuiInitialExtraction(QtGui.QDialog):
 
 
 class GuiDecision(QtGui.QDialog):
-    def __init__(self, remote, defered, automatique, parent, period, historique,
-                 individual_extractions, group_extraction, resource,
-                 signal_end_of_time):
-        super(GuiDecision, self).__init__(parent)
+    def __init__(self, remote, defered):
+        super(GuiDecision, self).__init__(remote.le2mclt.screen)
 
         # ----------------------------------------------------------------------
         # main attributes
         # ----------------------------------------------------------------------
         self.remote = remote
         self.defered = defered
-        self.automatique = automatique
-        self.historique = GuiHistorique(self, historique)
-        self.individual_extractions = individual_extractions
-        self.group_extraction = group_extraction
-        self.resource = resource
+        self.historique = GuiHistorique(self, self.remote.histo)
 
         layout = QtGui.QVBoxLayout(self)
 
@@ -257,7 +263,7 @@ class GuiDecision(QtGui.QDialog):
         # ----------------------------------------------------------------------
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            wperiod = WPeriod(period, self.historique)
+            wperiod = WPeriod(self.remote.currentperiod, self.historique)
             layout.addWidget(wperiod)
 
         wexplanation = WExplication(
@@ -277,9 +283,10 @@ class GuiDecision(QtGui.QDialog):
         layout_plot = QtGui.QHBoxLayout()
         layout.addLayout(layout_plot)
         self.plot_extraction = PlotExtraction(
-            self.remote.le2mclt.uid, self.individual_extractions)
+            self.remote.le2mclt.uid, self.remote.extractions_indiv)
         layout_plot.addWidget(self.plot_extraction)
-        self.plot_resource = PlotResource(self.group_extraction, self.resource)
+        self.plot_resource = PlotResource(
+            self.remote.extraction_group, self.remote.resource)
         layout_plot.addWidget(self.plot_resource)
 
         # ----------------------------------------------------------------------
@@ -304,16 +311,16 @@ class GuiDecision(QtGui.QDialog):
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.buttons.setEnabled(False)
             self.extract_dec.slider.sliderReleased.connect(self.send_extrac)
-            if self.automatique:
+            if self.remote.le2mclt.automatique:
                 self.extract_dec.slider.valueChanged.connect(self.send_extrac)
             self.timer_continuous = QtCore.QTimer()
             self.timer_continuous.timeout.connect(
                 self.send_data_and_update_graphs)
             self.timer_continuous.start(
                 int(pms.TIMER_UPDATE.total_seconds())*1000)
-            signal_end_of_time.connect(self.end_of_time)
+            self.remote.end_of_time.connect(self.end_of_time)
 
-        if pms.DYNAMIC_TYPE == pms.DISCRETE and self.automatique:
+        if pms.DYNAMIC_TYPE == pms.DISCRETE and self.remote.le2mclt.automatique:
             self.timer_automatique = QtCore.QTimer()
             self.extract_dec.slider.setValue(random.randint(
                 pms.DECISION_MIN,
@@ -336,7 +343,7 @@ class GuiDecision(QtGui.QDialog):
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             extraction = self.extract_dec.value()
-            if not self.automatique:
+            if not self.remote.le2mclt.automatique:
                 confirmation = QtGui.QMessageBox.question(
                     self, le2mtrans(u"Confirmation"),
                     le2mtrans(u"Do you confirm your choice?"),
@@ -354,7 +361,7 @@ class GuiDecision(QtGui.QDialog):
         self.remote.server_part.callRemote("new_extraction", dec)
 
     def send_data_and_update_graphs(self):
-        if self.automatique:
+        if self.remote.le2mclt.automatique:
             if random.random() < 0.33:
                 self.extract_dec.slider.setValue(random.randint(
                     pms.DECISION_MIN,
@@ -366,7 +373,7 @@ class GuiDecision(QtGui.QDialog):
         self.timer_continuous.stop()
         self.extract_dec.setEnabled(False)
         self.buttons.setEnabled(True)
-        if self.automatique:
+        if self.remote.le2mclt.automatique:
             self.buttons.button(QtGui.QDialogButtonBox.Ok).click()
 
 
@@ -457,3 +464,90 @@ class DConfigure(QtGui.QDialog):
             hours=time_continuous.hour, minutes=time_continuous.minute,
             seconds=time_continuous.second)
         self.accept()
+
+
+# ==============================================================================
+# SUMMARY SCREEN
+# ==============================================================================
+
+
+class GuiSummary(QtGui.QDialog):
+    def __init__(self, remote, defered):
+        super(GuiSummary, self).__init__(remote.le2mclt.screen)
+
+        self.remote = remote
+        self.defered = defered
+        self.historique = GuiHistorique(self, self.remote.histo)
+
+        layout = QtGui.QVBoxLayout()
+        self.setLayout(layout)
+
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            wperiod = WPeriod(self.remote.currentperiod, self.historique)
+            layout.addWidget(wperiod)
+
+        wexplanation = WExplication(
+            text=texts_DYNCPR.get_text_explanation(),
+            size=(450, 80), parent=self)
+        layout.addWidget(wexplanation)
+
+        # ----------------------------------------------------------------------
+        # GRAPHICAL AREA
+        # ----------------------------------------------------------------------
+        for v in self.remote.extractions_indiv.values():
+            v.curve = None
+        self.remote.extraction_group.curve = None
+        self.remote.resource.curve = None
+
+        layout_plot = QtGui.QHBoxLayout()
+        layout.addLayout(layout_plot)
+        self.plot_extraction = PlotExtraction(
+            self.remote.le2mclt.uid, self.remote.extractions_indiv)
+        layout_plot.addWidget(self.plot_extraction)
+        self.plot_resource = PlotResource(
+            self.remote.extraction_group, self.remote.resource)
+        layout_plot.addWidget(self.plot_resource)
+
+        # ----------------------------------------------------------------------
+        # TABLE AREA
+        # ----------------------------------------------------------------------
+        # ligne historique (entêtes et dernière ligne de l'historique)
+        histo_recap = [self.remote.histo[0], self.remote.histo[-1]]
+        self.tablemodel = TableModelHistorique(histo_recap)
+        self.widtableview = WTableview(parent=self, tablemodel=self.tablemodel,
+                                       size=(500, 90))
+        self.widtableview.ui.tableView.verticalHeader().setResizeMode(
+            QtGui.QHeaderView.Stretch)
+        layout.addWidget(self.widtableview)
+
+        # ----------------------------------------------------------------------
+        # FINALIZE THE DIALOG
+        # ----------------------------------------------------------------------
+
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        buttons.accepted.connect(self._accept)
+        layout.addWidget(buttons)
+
+        # auto
+        if self.remote.le2mclt.automatique:
+            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique.timeout.connect(
+                buttons.button(QtGui.QDialogButtonBox.Ok).click)
+            self.timer_automatique.start(7000)
+
+        # title and size
+        self.setWindowTitle(le2mtrans(u"Summary"))
+        self.adjustSize()
+        self.setFixedSize(self.size())
+
+    def _accept(self):
+        try:
+            self.timer_automatique.stop()
+        except AttributeError:
+            pass
+        logger.info(u"{} send Ok summary".format(self.remote.le2mclt))
+        self.defered.callback(1)
+        self.accept()
+
+    def reject(self):
+        pass

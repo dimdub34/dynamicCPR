@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """=============================================================================
 This modules contains the variables and the parameters.
 Do not change the variables.
@@ -39,7 +40,7 @@ PARTIE_ESSAI = False
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = timedelta(minutes=2)  # can be changed in config screen
+CONTINUOUS_TIME_DURATION = timedelta(minutes=1)  # can be changed in config screen
 # time for the player to take a decision
 DISCRETE_DECISION_TIME = timedelta(minutes=1)
 # milliseconds
@@ -49,7 +50,7 @@ TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 # RESOURCE
 # ------------------------------------------------------------------------------
 RESOURCE_INITIAL_STOCK = 100
-RESOURCE_GROWTH_RATE = 1.2
+RESOURCE_GROWTH = 15
 
 
 
