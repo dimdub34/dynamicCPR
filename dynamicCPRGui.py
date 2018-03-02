@@ -11,6 +11,7 @@
 # ==============================================================================
 # built-in
 from __future__ import division
+import sys
 import logging
 from PyQt4 import QtGui, QtCore
 import random
@@ -46,22 +47,39 @@ class MySlider(QtGui.QWidget):
 
         self.current_value = 0
 
-        self.layout = QtGui.QVBoxLayout()
+        # self.layout = QtGui.QVBoxLayout()
+        # self.setLayout(self.layout)
+
+        self.layout = QtGui.QGridLayout()
         self.setLayout(self.layout)
 
+        self.lcd_layout = QtGui.QHBoxLayout()
+        self.lcd_layout.addSpacerItem(
+            QtGui.QSpacerItem(20, 5, QtGui.QSizePolicy.Expanding,
+            QtGui.QSizePolicy.Fixed))
         self.lcd = QtGui.QLCDNumber(5)
         self.lcd.setMode(QtGui.QLCDNumber.Dec)
         self.lcd.setSmallDecimalPoint(True)
         self.lcd.setSegmentStyle(QtGui.QLCDNumber.Flat)
-        self.layout.addWidget(self.lcd)
+        self.lcd.setFixedSize(100, 50)
+        self.lcd_layout.addWidget(self.lcd)
+        self.lcd_layout.addSpacerItem(
+            QtGui.QSpacerItem(20, 5, QtGui.QSizePolicy.Expanding,
+            QtGui.QSizePolicy.Fixed))
+        self.layout.addLayout(self.lcd_layout, 0, 1)
+
+        self.label_min = QtGui.QLabel(str(pms.DECISION_MIN))
+        self.layout.addWidget(self.label_min, 1, 0)
+        self.label_max = QtGui.QLabel(str(pms.DECISION_MAX))
+        self.layout.addWidget(self.label_max, 1, 2)
 
         self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         self.slider.setMinimum(pms.DECISION_MIN)
         self.slider.setMaximum(pms.DECISION_MAX*int(1 / pms.DECISION_STEP))
-        self.slider.setTickInterval(1)
-        self.slider.setTickPosition(QtGui.QSlider.TicksBothSides)
-        self.layout.addWidget(self.slider)
+        self.slider.setTickInterval(100)
+        self.slider.setTickPosition(QtGui.QSlider.TicksAbove)
         self.slider.valueChanged.connect(self.display)
+        self.layout.addWidget(self.slider, 2, 0, 1, 3)
 
         self.adjustSize()
 
@@ -265,8 +283,7 @@ class GuiDecision(QtGui.QDialog):
             layout.addWidget(wperiod)
 
         wexplanation = WExplication(
-            text=texts_DYNCPR.get_text_explanation(),
-            size=(450, 80), parent=self)
+            text=texts_DYNCPR.EXTRACTION, size=(450, 80), parent=self)
         layout.addWidget(wexplanation)
 
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
@@ -292,6 +309,9 @@ class GuiDecision(QtGui.QDialog):
         # ----------------------------------------------------------------------
 
         self.extract_dec = MySlider()
+        player_extrac = self.remote.extractions_indiv[self.remote.le2mclt.uid].ydata[-1]
+        self.extract_dec.slider.setValue(player_extrac * 100)
+        self.extract_dec.lcd.display(player_extrac)
         layout.addWidget(self.extract_dec)
 
         # ----------------------------------------------------------------------
@@ -313,7 +333,7 @@ class GuiDecision(QtGui.QDialog):
                 self.extract_dec.slider.valueChanged.connect(self.send_extrac)
             self.timer_continuous = QtCore.QTimer()
             self.timer_continuous.timeout.connect(
-                self.send_data_and_update_graphs)
+                self.update_data_and_graphs)
             self.timer_continuous.start(
                 int(pms.TIMER_UPDATE.total_seconds())*1000)
             self.remote.end_of_time.connect(self.end_of_time)
@@ -358,7 +378,7 @@ class GuiDecision(QtGui.QDialog):
         logger.info("{} send {}".format(self.remote.le2mclt, dec))
         self.remote.server_part.callRemote("new_extraction", dec)
 
-    def send_data_and_update_graphs(self):
+    def update_data_and_graphs(self):
         if self.remote.le2mclt.automatique:
             if random.random() < 0.33:
                 self.extract_dec.slider.setValue(random.randint(
@@ -377,6 +397,7 @@ class GuiDecision(QtGui.QDialog):
             self.timer_automatique.timeout.connect(
                 self.buttons.button(QtGui.QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
+
 
 # ==============================================================================
 # CONFIGURATION SCREEN
@@ -473,7 +494,7 @@ class DConfigure(QtGui.QDialog):
 
 
 class GuiSummary(QtGui.QDialog):
-    def __init__(self, remote, defered):
+    def __init__(self, remote, defered, the_text=""):
         super(GuiSummary, self).__init__(remote.le2mclt.screen)
 
         self.remote = remote
@@ -487,9 +508,7 @@ class GuiSummary(QtGui.QDialog):
             wperiod = WPeriod(self.remote.currentperiod, self.historique)
             layout.addWidget(wperiod)
 
-        wexplanation = WExplication(
-            text=texts_DYNCPR.get_text_explanation(),
-            size=(450, 80), parent=self)
+        wexplanation = WExplication(text=the_text, size=(450, 80), parent=self)
         layout.addWidget(wexplanation)
 
         # ----------------------------------------------------------------------
@@ -552,3 +571,11 @@ class GuiSummary(QtGui.QDialog):
 
     def reject(self):
         pass
+
+
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    slider = MySlider()
+    slider.setGeometry(300, 300, 300, 200)
+    slider.show()
+    sys.exit(app.exec_())
