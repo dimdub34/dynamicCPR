@@ -109,10 +109,6 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         yield (self.remote.callRemote("end_update_data"))
 
     def compute_periodpayoff(self):
-        """
-        Compute the payoff for the period
-        :return:
-        """
         logger.debug(u"{} Period Payoff".format(self.joueur))
         self.currentperiod.DYNCPR_periodpayoff = 0
 
@@ -157,10 +153,16 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Part Payoff".format(self.joueur))
 
-        self.DYNCPR_gain_ecus = self.currentperiod.DYNCPR_cumulativepayoff
-        self.DYNCPR_gain_euros = float(self.DYNCPR_gain_ecus) * float(pms.TAUX_CONVERSION)
-        yield (self.remote.callRemote(
-            "set_payoffs", self.DYNCPR_gain_euros, self.DYNCPR_gain_ecus))
+        if pms.PARTIE_ESSAI:
+            self.DYNCPR_gain_ecus = 0
+            self.DYNCPR_gain_euros = 0
+
+        else:
+            self.DYNCPR_gain_ecus = self.currentperiod.DYNCPR_cumulativepayoff
+            self.DYNCPR_gain_euros = float(self.DYNCPR_gain_ecus) * \
+                                     float(pms.TAUX_CONVERSION)
+            yield (self.remote.callRemote(
+                "set_payoffs", self.DYNCPR_gain_euros, self.DYNCPR_gain_ecus))
 
         logger.info(u'{} Payoff ecus {} Payoff euros {:.2f}'.format(
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
