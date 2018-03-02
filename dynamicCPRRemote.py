@@ -27,6 +27,7 @@ class RemoteDYNCPR(IRemote, QObject):
         IRemote.__init__(self, le2mclt)
         QObject.__init__(self)
         self.extractions_indiv = dict()
+        self.payoffs_indiv = dict()
 
     def __init_vars(self):
         self.start_time = None
@@ -196,10 +197,13 @@ class RemoteDYNCPR(IRemote, QObject):
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].add_x(xdata)
             self.extractions_indiv[k].add_y(v["extraction"])
+            self.payoffs_indiv[k] = v["payoff"]
             try:
                 self.extractions_indiv[k].update_curve()
             except AttributeError:  # if period==0
                 pass
+        logger.debug("{} payoff {}".format(self.le2mclt,
+                                           self.payoffs_indiv[self.le2mclt.uid]))
 
         # ----------------------------------------------------------------------
         # log
@@ -232,7 +236,8 @@ class RemoteDYNCPR(IRemote, QObject):
             return 1
         else:
             defered = defer.Deferred()
-            summary_screen = GuiSummary(self, defered)
+            summary_screen = GuiSummary(
+                self, defered, texts_DYNCPR.get_text_summary(period_content))
             summary_screen.show()
             return defered
 
