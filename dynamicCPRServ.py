@@ -17,14 +17,14 @@ from dynamicCPRTexts import trans_DYNCPR
 from dynamicCPRGroup import GroupDYNCPR
 
 
-logger = logging.getLogger("le2m.{}".format(__name__))
+logger = logging.getLogger("le2m")
 
 
 class Serveur(QObject):
 
     def __init__(self, le2mserv):
         QObject.__init__(self)
-        self.__le2mserv = le2mserv
+        self.le2mserv = le2mserv
         self.__current_sequence = 0
         self.__groups = []
 
@@ -35,20 +35,12 @@ class Serveur(QObject):
             lambda _: self.le2mserv.gestionnaire_graphique. \
             display_information2(
                 utiltools.get_module_info(pms), le2mtrans(u"Parameters"))
-        actions["Start"] = lambda _: self._demarrer()
+        actions["Start"] = lambda _: self.demarrer()
         actions["Payoffs"] = \
             lambda _: self.le2mserv.gestionnaire_experience.\
             display_payoffs_onserver("dynamicCPR")
         self.le2mserv.gestionnaire_graphique.add_topartmenu(
             u"Dynamic CPR", actions)
-
-    # --------------------------------------------------------------------------
-    # PROPERTIES
-    # --------------------------------------------------------------------------
-
-    @property
-    def le2mserv(self):
-        return self.__le2mserv
 
     # --------------------------------------------------------------------------
     # METHODS
@@ -67,7 +59,7 @@ class Serveur(QObject):
             self.le2mserv.gestionnaire_graphique.infoserv(pms_list)
 
     @defer.inlineCallbacks
-    def _demarrer(self):
+    def demarrer(self):
 
         # ----------------------------------------------------------------------
         # check conditions
