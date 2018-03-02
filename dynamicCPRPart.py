@@ -102,7 +102,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
-            self.joueur.uid, self.current_extraction, self.currentperiod.number)
+            self.joueur, self.current_extraction, self.currentperiod.number)
 
     @defer.inlineCallbacks
     def end_update_data(self):
@@ -216,6 +216,7 @@ class ExtractionsDYNCPR(Base):
     repetitions_id = Column(Integer, ForeignKey("partie_dynamicCPR_repetitions.id"))
     DYNCPR_extraction = Column(Float)
     DYNCPR_extraction_time = Column(DateTime)
+    DYNCPR_payoff = Column(Float)
 
     def __init__(self, extraction):
         self.DYNCPR_extraction = extraction
@@ -227,4 +228,5 @@ class ExtractionsDYNCPR(Base):
                 "%H:%M:%S"))
 
     def to_dict(self):
-        return {"extraction": self.DYNCPR_extraction, "time": self.DYNCPR_extraction_time}
+        return {"extraction": self.DYNCPR_extraction,
+                "time": self.DYNCPR_extraction_time}
