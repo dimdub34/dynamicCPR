@@ -29,6 +29,8 @@ class GroupDYNCPR(Base):
         self.DYNCPR_sequence = sequence
         self.DYNCPR_treatment = pms.TREATMENT
         self.__players = player_list
+        for p in self.players_part:
+            p.DYNCPR_group = self.uid
         self.current_players_extractions = dict()
         self.current_extraction = None
         self.current_resource = pms.RESOURCE_INITIAL_STOCK
@@ -100,9 +102,20 @@ class GroupDYNCPR(Base):
         :param period: the period number
         :return:
         """
-        self.current_players_extractions[player] = extraction.to_dict()
+        self.current_players_extractions[player.uid] = extraction.to_dict()
         group_extrac = sum(
             [e["extraction"] for e in self.current_players_extractions.values()])
+        for j in self.players:
+            try:
+                j_extrac = self.current_players_extractions[j.uid]["extraction"]
+                j_payoff = pms.param_a * j_extrac - (pms.param_b / 2) * \
+                           pow(j_extrac, 2) - \
+                           (pms.param_c0 - pms.param_c1 * group_extrac) * j_extrac
+                self.current_players_extractions[j.uid]["payoff"] = j_payoff
+                if j == player:
+                    extraction.DYNCPR_payoff = j_payoff
+            except KeyError:
+                pass  # only for the initial extraction
         self.current_extraction = GroupExtractionDYNCPR(
             period, extraction.DYNCPR_extraction_time, group_extrac,
             self.current_resource)
