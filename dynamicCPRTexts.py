@@ -22,10 +22,19 @@ except (AttributeError, IOError):
     trans_DYNCPR = lambda x: x  # if there is an error, no translation
 
 
-INITIAL_EXTRACTION = trans_DYNCPR(
-    u"Please choose an initial extraction value"
-)
+# ==============================================================================
+# EXPLANATIONS
+# ==============================================================================
 
+INITIAL_EXTRACTION = trans_DYNCPR(
+    u"Please choose an initial extraction value")
+
+EXTRACTION = trans_DYNCPR(u"Please choose an extraction level")
+
+
+# ==============================================================================
+# HISTORIC
+# ==============================================================================
 
 
 def get_histo_vars():
@@ -39,16 +48,9 @@ def get_histo_head():
              le2mtrans(u"Period\npayoff"), le2mtrans(u"Cumulative\npayoff")]
 
 
-def get_text_explanation():
-    return trans_DYNCPR(u"Explanation text")
-
-
-def get_text_label_decision():
-    return trans_DYNCPR(u"Decision label")
-
-
 def get_text_summary(period_content):
     txt = trans_DYNCPR(u"Summary text")
     return txt
+
 
 
