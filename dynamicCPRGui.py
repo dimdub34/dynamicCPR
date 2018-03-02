@@ -374,8 +374,11 @@ class GuiDecision(QtGui.QDialog):
         self.extract_dec.setEnabled(False)
         self.buttons.setEnabled(True)
         if self.remote.le2mclt.automatique:
-            self.buttons.button(QtGui.QDialogButtonBox.Ok).click()
-
+            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique.setSingleShot(True)
+            self.timer_automatique.timeout.connect(
+                self.buttons.button(QtGui.QDialogButtonBox.Ok).click)
+            self.timer_automatique.start(7000)
 
 # ==============================================================================
 # CONFIGURATION SCREEN

@@ -149,7 +149,7 @@ class Serveur(QObject):
 
             # __ timer continuous part __
             QTimer.singleShot(
-                pms.CONTINUOUS_TIME_DURATION.total_seconds()*1000,
+                pms.CONTINUOUS_TIME_DURATION.total_seconds()*1000 + 1000,
                 self.slot_time_elapsed)
 
             time_start = datetime.now()
