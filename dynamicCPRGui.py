@@ -13,7 +13,8 @@
 from __future__ import division
 import sys
 import logging
-from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt, QTimer, QTime
 import random
 from datetime import timedelta
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -41,45 +42,41 @@ logger = logging.getLogger("le2m")
 # ==============================================================================
 
 
-class MySlider(QtGui.QWidget):
+class MySlider(QWidget):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
 
         self.current_value = 0
 
-        # self.layout = QtGui.QVBoxLayout()
-        # self.setLayout(self.layout)
-
-        self.layout = QtGui.QGridLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.lcd_layout = QtGui.QHBoxLayout()
-        self.lcd_layout.addSpacerItem(
-            QtGui.QSpacerItem(20, 5, QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Fixed))
-        self.lcd = QtGui.QLCDNumber(5)
-        self.lcd.setMode(QtGui.QLCDNumber.Dec)
+        self.grid_layout = QGridLayout()
+        self.layout.addLayout(self.grid_layout)
+
+        self.lcd_layout = QHBoxLayout()
+        self.lcd = QLCDNumber(5)
+        self.lcd.setMode(QLCDNumber.Dec)
         self.lcd.setSmallDecimalPoint(True)
-        self.lcd.setSegmentStyle(QtGui.QLCDNumber.Flat)
+        self.lcd.setSegmentStyle(QLCDNumber.Flat)
         self.lcd.setFixedSize(100, 50)
-        self.lcd_layout.addWidget(self.lcd)
-        self.lcd_layout.addSpacerItem(
-            QtGui.QSpacerItem(20, 5, QtGui.QSizePolicy.Expanding,
-            QtGui.QSizePolicy.Fixed))
-        self.layout.addLayout(self.lcd_layout, 0, 1)
+        self.lcd_layout.addWidget(self.lcd, 0, Qt.AlignCenter)
+        self.grid_layout.addLayout(self.lcd_layout, 0, 1)
 
-        self.label_min = QtGui.QLabel(str(pms.DECISION_MIN))
-        self.layout.addWidget(self.label_min, 1, 0)
-        self.label_max = QtGui.QLabel(str(pms.DECISION_MAX))
-        self.layout.addWidget(self.label_max, 1, 2)
+        self.label_min = QLabel(str(pms.DECISION_MIN))
+        self.grid_layout.addWidget(self.label_min, 1, 0, Qt.AlignLeft)
+        self.label_max = QLabel(str(pms.DECISION_MAX))
+        self.grid_layout.addWidget(self.label_max, 1, 2, Qt.AlignRight)
 
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(pms.DECISION_MIN)
         self.slider.setMaximum(pms.DECISION_MAX*int(1 / pms.DECISION_STEP))
         self.slider.setTickInterval(100)
-        self.slider.setTickPosition(QtGui.QSlider.TicksAbove)
+        self.slider.setTickPosition(QSlider.TicksAbove)
         self.slider.valueChanged.connect(self.display)
-        self.layout.addWidget(self.slider, 2, 0, 1, 3)
+        self.grid_layout.addWidget(self.slider, 2, 0, 1, 3)
+
+        self.layout.addStretch()
 
         self.adjustSize()
 
@@ -90,14 +87,14 @@ class MySlider(QtGui.QWidget):
         return self.slider.value() / int(1 / pms.DECISION_STEP)
 
 
-class PlotExtraction(QtGui.QWidget):
+class PlotExtraction(QWidget):
     """
     This widget plot the individual extractions
     """
     def __init__(self, cltuid, extractions_indiv):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
         self.fig = plt.figure(figsize=(10, 7))
@@ -142,18 +139,18 @@ class PlotExtraction(QtGui.QWidget):
         self.canvas.draw()
 
 
-class PlotResource(QtGui.QWidget):
+class PlotResource(QWidget):
     """
     Display the curves with the total extraction of the group and the curve of
     the stock of resource
     """
     def __init__(self, extraction_group, resource):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
 
         self.extraction_group = extraction_group
         self.resource = resource
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
         self.fig = plt.figure(figsize=(10, 7))
@@ -203,14 +200,14 @@ class PlotResource(QtGui.QWidget):
 # ==============================================================================
 
 
-class GuiInitialExtraction(QtGui.QDialog):
+class GuiInitialExtraction(QDialog):
     def __init__(self, remote, defered):
-        QtGui.QDialog.__init__(self, remote.le2mclt.screen)
+        QDialog.__init__(self, remote.le2mclt.screen)
 
         self.remote = remote
         self.defered = defered
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
         explanation_area = WExplication(
@@ -220,7 +217,7 @@ class GuiInitialExtraction(QtGui.QDialog):
         self.slider_area = MySlider()
         layout.addWidget(self.slider_area)
 
-        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self._accept)
         layout.addWidget(buttons)
 
@@ -231,9 +228,9 @@ class GuiInitialExtraction(QtGui.QDialog):
         if self.remote.le2mclt.automatique:
             self.slider_area.slider.setValue(random.randint(
                 pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
-            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique = QTimer()
             self.timer_automatique.timeout.connect(
-                buttons.button(QtGui.QDialogButtonBox.Ok).click)
+                buttons.button(QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
 
     def _accept(self):
@@ -243,10 +240,10 @@ class GuiInitialExtraction(QtGui.QDialog):
             pass
         val = self.slider_area.slider.value() / int(1/pms.DECISION_STEP)
         if not self.remote.le2mclt.automatique:
-            confirmation = QtGui.QMessageBox.question(
+            confirmation = QMessageBox.question(
                 self, "Confirmation", trans_DYNCPR(u"Do you confirm your choice?"),
-                QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
-            if confirmation != QtGui.QMessageBox.Yes:
+                QMessageBox.No | QMessageBox.Yes)
+            if confirmation != QMessageBox.Yes:
                 return
         self.accept()
         logger.info("send {}".format(val))
@@ -261,7 +258,7 @@ class GuiInitialExtraction(QtGui.QDialog):
 # ==============================================================================
 
 
-class GuiDecision(QtGui.QDialog):
+class GuiDecision(QDialog):
     def __init__(self, remote, defered):
         super(GuiDecision, self).__init__(remote.le2mclt.screen)
 
@@ -272,7 +269,7 @@ class GuiDecision(QtGui.QDialog):
         self.defered = defered
         self.historique = GuiHistorique(self, self.remote.histo)
 
-        layout = QtGui.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # ----------------------------------------------------------------------
         # HEAD AREA
@@ -295,7 +292,7 @@ class GuiDecision(QtGui.QDialog):
         # GRAPHICAL AREA
         # ----------------------------------------------------------------------
 
-        layout_plot = QtGui.QHBoxLayout()
+        layout_plot = QHBoxLayout()
         layout.addLayout(layout_plot)
         self.plot_extraction = PlotExtraction(
             self.remote.le2mclt.uid, self.remote.extractions_indiv)
@@ -318,7 +315,7 @@ class GuiDecision(QtGui.QDialog):
         # FOOT AREA
         # ----------------------------------------------------------------------
 
-        self.buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         self.buttons.accepted.connect(self._accept)
         layout.addWidget(self.buttons)
 
@@ -331,7 +328,7 @@ class GuiDecision(QtGui.QDialog):
             self.extract_dec.slider.sliderReleased.connect(self.send_extrac)
             if self.remote.le2mclt.automatique:
                 self.extract_dec.slider.valueChanged.connect(self.send_extrac)
-            self.timer_continuous = QtCore.QTimer()
+            self.timer_continuous = QTimer()
             self.timer_continuous.timeout.connect(
                 self.update_data_and_graphs)
             self.timer_continuous.start(
@@ -339,13 +336,13 @@ class GuiDecision(QtGui.QDialog):
             self.remote.end_of_time.connect(self.end_of_time)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE and self.remote.le2mclt.automatique:
-            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique = QTimer()
             self.extract_dec.slider.setValue(random.randint(
                 pms.DECISION_MIN,
                 pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
             self.timer_automatique.setSingleShot(True)
             self.timer_automatique.timeout.connect(
-                self.buttons.button(QtGui.QDialogButtonBox.Ok).click)
+                self.buttons.button(QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
 
     def reject(self):
@@ -362,11 +359,11 @@ class GuiDecision(QtGui.QDialog):
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             extraction = self.extract_dec.value()
             if not self.remote.le2mclt.automatique:
-                confirmation = QtGui.QMessageBox.question(
+                confirmation = QMessageBox.question(
                     self, le2mtrans(u"Confirmation"),
                     le2mtrans(u"Do you confirm your choice?"),
-                    QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
-                if confirmation != QtGui.QMessageBox.Yes:
+                    QMessageBox.No | QMessageBox.Yes)
+                if confirmation != QMessageBox.Yes:
                     return
 
         logger.info(u"{} send {}".format(self.remote.le2mclt, extraction))
@@ -392,10 +389,10 @@ class GuiDecision(QtGui.QDialog):
         self.extract_dec.setEnabled(False)
         self.buttons.setEnabled(True)
         if self.remote.le2mclt.automatique:
-            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique = QTimer()
             self.timer_automatique.setSingleShot(True)
             self.timer_automatique.timeout.connect(
-                self.buttons.button(QtGui.QDialogButtonBox.Ok).click)
+                self.buttons.button(QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
 
 
@@ -404,70 +401,70 @@ class GuiDecision(QtGui.QDialog):
 # ==============================================================================
 
 
-class DConfigure(QtGui.QDialog):
+class DConfigure(QDialog):
     def __init__(self, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
-        form = QtGui.QFormLayout()
+        form = QFormLayout()
         layout.addLayout(form)
 
         # ----------------------------------------------------------------------
         # treatment
         # ----------------------------------------------------------------------
-        # self.combo_treatment = QtGui.QComboBox()
+        # self.combo_treatment = QComboBox()
         # self.combo_treatment.addItems(
         #     [v for k, v in sorted(pms.TREATMENTS_NAMES.items())])
         # self.combo_treatment.setCurrentIndex(pms.TREATMENT)
-        # form.addRow(QtGui.QLabel(u"Traitement"), self.combo_treatment)
+        # form.addRow(QLabel(u"Traitement"), self.combo_treatment)
 
         # ----------------------------------------------------------------------
         # dynamic
         # ----------------------------------------------------------------------
-        self.combo_dynamic = QtGui.QComboBox()
+        self.combo_dynamic = QComboBox()
         self.combo_dynamic.addItems(["CONTINUOUS", "DISCRETE"])
         self.combo_dynamic.setCurrentIndex(pms.DYNAMIC_TYPE)
-        form.addRow(QtGui.QLabel("Dynamic"), self.combo_dynamic)
+        form.addRow(QLabel("Dynamic"), self.combo_dynamic)
 
         # ----------------------------------------------------------------------
         # trial part
         # ----------------------------------------------------------------------
-        self.checkbox_essai = QtGui.QCheckBox()
+        self.checkbox_essai = QCheckBox()
         self.checkbox_essai.setChecked(pms.PARTIE_ESSAI)
-        form.addRow(QtGui.QLabel(u"Trial part"), self.checkbox_essai)
+        form.addRow(QLabel(u"Trial part"), self.checkbox_essai)
 
         # ----------------------------------------------------------------------
         # periods
         # ----------------------------------------------------------------------
-        self.spin_periods = QtGui.QSpinBox()
+        self.spin_periods = QSpinBox()
         self.spin_periods.setMinimum(0)
         self.spin_periods.setMaximum(100)
         self.spin_periods.setSingleStep(1)
         self.spin_periods.setValue(pms.NOMBRE_PERIODES)
-        self.spin_periods.setButtonSymbols(QtGui.QSpinBox.NoButtons)
+        self.spin_periods.setButtonSymbols(QSpinBox.NoButtons)
         self.spin_periods.setMaximumWidth(50)
-        form.addRow(QtGui.QLabel(u"Number of periods"), self.spin_periods)
+        form.addRow(QLabel(u"Number of periods"), self.spin_periods)
 
         # ----------------------------------------------------------------------
         # continuous time duration
         # ----------------------------------------------------------------------
-        self.timeEdit_continuous_duration = QtGui.QTimeEdit()
+        self.timeEdit_continuous_duration = QTimeEdit()
         self.timeEdit_continuous_duration.setDisplayFormat("hh:mm:ss")
         time_duration = timedelta_to_time(pms.CONTINUOUS_TIME_DURATION)
         self.timeEdit_continuous_duration.setTime(
-            QtCore.QTime(time_duration.hour, time_duration.minute,
+            QTime(time_duration.hour, time_duration.minute,
                          time_duration.second))
         self.timeEdit_continuous_duration.setMaximumWidth(100)
-        form.addRow(QtGui.QLabel(u"Continuous time duration"),
+        form.addRow(QLabel(u"Continuous time duration"),
                     self.timeEdit_continuous_duration)
 
         # ----------------------------------------------------------------------
         # buttons
         # ----------------------------------------------------------------------
-        button = QtGui.QDialogButtonBox(
-            QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        button = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button.accepted.connect(self._accept)
         button.rejected.connect(self.reject)
         layout.addWidget(button)
@@ -493,7 +490,7 @@ class DConfigure(QtGui.QDialog):
 # ==============================================================================
 
 
-class GuiSummary(QtGui.QDialog):
+class GuiSummary(QDialog):
     def __init__(self, remote, defered, the_text=""):
         super(GuiSummary, self).__init__(remote.le2mclt.screen)
 
@@ -501,7 +498,7 @@ class GuiSummary(QtGui.QDialog):
         self.defered = defered
         self.historique = GuiHistorique(self, self.remote.histo)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
@@ -519,7 +516,7 @@ class GuiSummary(QtGui.QDialog):
         self.remote.extraction_group.curve = None
         self.remote.resource.curve = None
 
-        layout_plot = QtGui.QHBoxLayout()
+        layout_plot = QHBoxLayout()
         layout.addLayout(layout_plot)
         self.plot_extraction = PlotExtraction(
             self.remote.le2mclt.uid, self.remote.extractions_indiv)
@@ -537,22 +534,22 @@ class GuiSummary(QtGui.QDialog):
         self.widtableview = WTableview(parent=self, tablemodel=self.tablemodel,
                                        size=(500, 90))
         self.widtableview.ui.tableView.verticalHeader().setResizeMode(
-            QtGui.QHeaderView.Stretch)
+            QHeaderView.Stretch)
         layout.addWidget(self.widtableview)
 
         # ----------------------------------------------------------------------
         # FINALIZE THE DIALOG
         # ----------------------------------------------------------------------
 
-        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self._accept)
         layout.addWidget(buttons)
 
         # auto
         if self.remote.le2mclt.automatique:
-            self.timer_automatique = QtCore.QTimer()
+            self.timer_automatique = QTimer()
             self.timer_automatique.timeout.connect(
-                buttons.button(QtGui.QDialogButtonBox.Ok).click)
+                buttons.button(QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
 
         # title and size
@@ -574,7 +571,7 @@ class GuiSummary(QtGui.QDialog):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     slider = MySlider()
     slider.setGeometry(300, 300, 300, 200)
     slider.show()
