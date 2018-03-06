@@ -95,7 +95,7 @@ class Serveur(QObject):
         logger.debug(gps)
         self.le2mserv.gestionnaire_graphique.infoserv(
             "Groups", bg="gray", fg="white")
-        for g, m in gps.items():
+        for g, m in sorted(gps.items()):
             group = GroupDYNCPR(self.le2mserv, g, m, self.__current_sequence)
             self.le2mserv.gestionnaire_base.ajouter(group)
             self.__groups.append(group)

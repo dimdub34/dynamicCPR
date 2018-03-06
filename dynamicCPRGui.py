@@ -109,7 +109,7 @@ class PlotExtraction(QWidget):
             self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
             for k, v in extractions_indiv.items():
                 if k == cltuid:
-                    lab = trans_DYNCPR(u"Me")
+                    lab = trans_DYNCPR(u"You")
                 else:
                     lab = trans_DYNCPR(u"The other")
                 self.graph.plot(v.xdata, v.ydata, ls="-", label=lab, marker="*")
@@ -122,7 +122,7 @@ class PlotExtraction(QWidget):
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
             for k, v in extractions_indiv.items():
                 if k == cltuid:
-                    lab = trans_DYNCPR(u"Me")
+                    lab = trans_DYNCPR(u"You")
                 else:
                     lab = trans_DYNCPR(u"The other")
                 if v.curve is None:

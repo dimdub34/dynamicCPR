@@ -26,11 +26,11 @@ class RemoteDYNCPR(IRemote, QObject):
     def __init__(self, le2mclt):
         IRemote.__init__(self, le2mclt)
         QObject.__init__(self)
-        self.extractions_indiv = dict()
-        self.payoffs_indiv = dict()
 
     def __init_vars(self):
         self.start_time = None
+        self.extractions_indiv = dict()
+        self.payoffs_indiv = dict()
         self.extraction_group = PlotData()
         self.resource = PlotData()
         for j in self.group_members:
