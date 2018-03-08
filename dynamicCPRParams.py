@@ -20,6 +20,9 @@ TREATMENTS_NAMES = {BASELINE: "Baseline"}
 CONTINUOUS = 0
 DISCRETE = 1
 IMPULSORY = 2  # future
+# used to store the curve (DYNCRP_curve_type)
+EXTRACTION = 0
+PAYOFF = 1
 
 # ------------------------------------------------------------------------------
 # PARAMETERS
@@ -40,7 +43,7 @@ PARTIE_ESSAI = False
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = timedelta(minutes=1)  # can be changed in config screen
+CONTINUOUS_TIME_DURATION = timedelta(seconds=400)  # can be changed in config screen
 # time for the player to take a decision
 DISCRETE_DECISION_TIME = timedelta(minutes=1)
 # milliseconds
@@ -49,13 +52,13 @@ TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 # ------------------------------------------------------------------------------
 # RESOURCE
 # ------------------------------------------------------------------------------
-RESOURCE_INITIAL_STOCK = 100
+RESOURCE_INITIAL_STOCK = 500
 RESOURCE_GROWTH = 15
 
 # ------------------------------------------------------------------------------
 # FONCTION DE GAIN
 # ------------------------------------------------------------------------------
-param_a = 0.2
+param_a = 1.1
 param_b = 0.3
 param_c0 = 0.5
 param_c1 = 0.5

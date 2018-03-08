@@ -34,6 +34,7 @@ class GroupDYNCPR(Base):
         self.current_players_extractions = dict()
         self.current_extraction = None
         self.current_resource = pms.RESOURCE_INITIAL_STOCK
+        self.time_start = None
         self.timer_update = QTimer()
         self.timer_update.setInterval(
             int(pms.TIMER_UPDATE.total_seconds())*1000)
@@ -79,15 +80,38 @@ class GroupDYNCPR(Base):
     # --------------------------------------------------------------------------
 
     def update_data(self):
-        self.current_resource += pms.RESOURCE_GROWTH
-        self.current_resource -= self.current_extraction.DYNCPR_group_extraction
-        if self.current_resource < 0:
-            self.current_resource = 0
+        # after the initial extraction but before the game starts
+        # self.time_start is None
+        try:
+            the_time = (datetime.now() - self.time_start).total_seconds()
+        except TypeError:
+            the_time = 0
+
+        # ----------------------------------------------------------------------
+        # compute and save the group extraction
+        # ----------------------------------------------------------------------
+        group_extrac = sum(
+            [e["extraction"] for e in self.current_players_extractions.values()])
+        self.current_extraction = GroupExtractionDYNCPR(
+            0, the_time, group_extrac, self.current_resource)
+        self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
+        self.extractions.append(self.current_extraction)
         logger.debug(
             "{} update_data extraction {:.2f} - resource {:.2f}".format(
                 self, self.current_extraction.DYNCPR_group_extraction,
                 self.current_resource))
-        the_time = datetime.now()
+
+        # ----------------------------------------------------------------------
+        # compute the resource
+        # ----------------------------------------------------------------------
+        self.current_resource += pms.RESOURCE_GROWTH
+        self.current_resource -= self.current_extraction.DYNCPR_group_extraction
+        if self.current_resource < 0:
+            self.current_resource = 0
+
+        # ----------------------------------------------------------------------
+        # update the remote
+        # ----------------------------------------------------------------------
         for j in self.players_part:
             j.remote.callRemote(
                 "update_data", self.current_players_extractions,
@@ -105,24 +129,24 @@ class GroupDYNCPR(Base):
         self.current_players_extractions[player.uid] = extraction.to_dict()
         group_extrac = sum(
             [e["extraction"] for e in self.current_players_extractions.values()])
-        for j in self.players:
-            try:
-                j_extrac = self.current_players_extractions[j.uid]["extraction"]
-                j_payoff = pms.param_a * j_extrac - (pms.param_b / 2) * \
-                           pow(j_extrac, 2) - \
-                           (pms.param_c0 - pms.param_c1 * group_extrac) * j_extrac
-                self.current_players_extractions[j.uid]["payoff"] = j_payoff
-                if j == player:
-                    extraction.DYNCPR_payoff = j_payoff
-            except KeyError:
-                pass  # only for the initial extraction
-        self.current_extraction = GroupExtractionDYNCPR(
-            period, extraction.DYNCPR_extraction_time, group_extrac,
-            self.current_resource)
-        self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
-        self.extractions.append(self.current_extraction)
+
+        # ----------------------------------------------------------------------
+        # if discrete save the extraction in the database, and compute
+        # individual payoffs
+        # if continuous it is saved in the update_data method
+        # ----------------------------------------------------------------------
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            # todo: check if reference or value
+            self.previous_extraction = self.current_extraction
+            self.current_extraction = GroupExtractionDYNCPR(
+                period, extraction.DYNCPR_extraction_time, group_extrac,
+                self.current_resource)
+            self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
+            self.extractions.append(self.current_extraction)
+            # todo: compute individual payoffs
+
         self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
-            self.uid_short, self.current_extraction))
+            self.uid_short, group_extrac))
 
 
 # ==============================================================================
@@ -136,7 +160,7 @@ class GroupExtractionDYNCPR(Base):
     group_uid = Column(String, ForeignKey("group_dynamicCPR.uid"))
 
     DYNCPR_period = Column(Integer, default=None)
-    DYNCPR_time = Column(DateTime, default=None)
+    DYNCPR_time = Column(Integer)
     DYNCPR_group_extraction = Column(Float, default=0)
     DYNCPR_resource_stock = Column(Float)
 

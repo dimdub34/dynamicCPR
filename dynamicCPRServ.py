@@ -26,7 +26,7 @@ class Serveur(QObject):
         QObject.__init__(self)
         self.le2mserv = le2mserv
         self.__current_sequence = 0
-        self.__groups = []
+        self.groups = []
 
         # __ MENU __
         actions = OrderedDict()
@@ -83,7 +83,7 @@ class Serveur(QObject):
             'dynamicCPR')
 
         # __ form groups __
-        del self.__groups[:]
+        del self.groups[:]
         try:
             gps = utiltools.form_groups(
                 self.le2mserv.gestionnaire_joueurs.get_players(),
@@ -98,7 +98,7 @@ class Serveur(QObject):
         for g, m in sorted(gps.items()):
             group = GroupDYNCPR(self.le2mserv, g, m, self.__current_sequence)
             self.le2mserv.gestionnaire_base.ajouter(group)
-            self.__groups.append(group)
+            self.groups.append(group)
             self.le2mserv.gestionnaire_graphique.infoserv("__ {} __".format(group))
             for j in m:
                 j.group = group
@@ -119,11 +119,8 @@ class Serveur(QObject):
         yield (self.le2mserv.gestionnaire_experience.run_step(
             trans_DYNCPR(u"Initial extraction"), self._tous,
             "set_initial_extraction"))
-        for g in self.__groups:
-            self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
-                g.uid_short, g.current_extraction))
         self.le2mserv.gestionnaire_experience.run_func(
-            self.__groups, "update_data")
+            self.groups, "update_data")
 
         # ----------------------------------------------------------------------
         # DEPENDS ON TREATMENT
@@ -147,7 +144,8 @@ class Serveur(QObject):
             time_start = datetime.now()
             self.le2mserv.gestionnaire_graphique.infoserv(
                 "Start time: {}".format(time_start.strftime("%H:%M:%S")))
-            for g in self.__groups:
+            for g in self.groups:
+                g.time_start = time_start
                 g.timer_update.start()
             yield(self.le2mserv.gestionnaire_experience.run_step(
                 trans_DYNCPR("Decision"), self._tous, "display_decision",
@@ -179,7 +177,7 @@ class Serveur(QObject):
                     "dynamicCPR")
 
                 self.le2mserv.gestionnaire_experience.run_func(
-                    self.__groups, "update_data")
+                    self.groups, "update_data")
         
         # summary
         yield(self.le2mserv.gestionnaire_experience.run_step(
@@ -196,7 +194,7 @@ class Serveur(QObject):
     def slot_time_elapsed(self):
         self.le2mserv.gestionnaire_graphique.infoserv("End time: {}".format(
             datetime.now().strftime("%H:%M:%S")))
-        for g in self.__groups:
+        for g in self.groups:
             g.timer_update.stop()
         yield (self.le2mserv.gestionnaire_experience.run_func(
             self._tous, "end_update_data"))

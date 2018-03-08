@@ -21,6 +21,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
 
     partie_id = Column(Integer, ForeignKey('parties.id'), primary_key=True)
     repetitions = relationship('RepetitionsDYNCPR')
+    curves = relationship('CurveDYNCPR')
 
     DYNCPR_current_sequence = Column(Integer)
     DYNCPR_treatment = Column(Integer, default=pms.TREATMENT)
@@ -98,7 +99,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :return:
         """
         self.current_extraction = ExtractionsDYNCPR(extraction)
-        self.joueur.info(self.current_extraction)
+        self.joueur.info(self.current_extraction)  # todo: change time reference
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
@@ -138,8 +139,18 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :return:
         """
         logger.debug(u"{} Summary".format(self.joueur))
-        yield(self.remote.callRemote(
+        # ----------------------------------------------------------------------
+        # we collect the x_data and y_data of the curves displayed on the
+        # remote
+        # ----------------------------------------------------------------------
+        data_indiv = yield(self.remote.callRemote(
             "display_summary", self.currentperiod.to_dict()))
+        extrac_indiv = data_indiv["extractions"]
+        for x, y in extrac_indiv:
+            curve_data = CurveDYNCPR(pms.EXTRACTION, x, y)
+            self.le2mserv.gestionnaire_base.ajouter(curve_data)
+            self.curves.append(curve_data)
+
         self.joueur.info("Ok")
         self.joueur.remove_waitmode()
 
@@ -203,6 +214,7 @@ class RepetitionsDYNCPR(Base):
 
 # ==============================================================================
 # EXTRACTIONS
+# we save each individual extraction
 # ==============================================================================
 
 
@@ -230,3 +242,25 @@ class ExtractionsDYNCPR(Base):
     def to_dict(self):
         return {"extraction": self.DYNCPR_extraction,
                 "time": self.DYNCPR_extraction_time}
+
+
+# ==============================================================================
+# CURVES
+# when the part is over, we save each curve
+# ==============================================================================
+
+
+class CurveDYNCPR(Base):
+    __tablename__ = "partie_dynamicCPR_curves"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    partie_id = Column(Integer, ForeignKey("partie_dynamicCPR.partie_id"))
+    DYNCPR_curve_type = Column(Integer)
+    DYNCPR_curve_x = Column(Integer)
+    DYNCPR_curve_y = Column(Float)
+
+    def __init__(self, c_type, x, y):
+        self.DYNCPR_curve_type = c_type
+        self.DYNCPR_curve_x = x
+        self.DYNCPR_curve_y = y
+
+

@@ -91,73 +91,20 @@ class PlotExtraction(QWidget):
     """
     This widget plot the individual extractions
     """
-    def __init__(self, cltuid, extractions_indiv):
+    def __init__(self, cltuid, extractions_indiv, extraction_group):
         QWidget.__init__(self)
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self.fig = plt.figure(figsize=(10, 7))
-        self.canvas = FigureCanvas(self.fig)
-        layout.addWidget(self.canvas)
-
-        self.graph = self.fig.add_subplot(111)
-
-        if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
-            self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
-            for k, v in extractions_indiv.items():
-                if k == cltuid:
-                    lab = trans_DYNCPR(u"You")
-                else:
-                    lab = trans_DYNCPR(u"The other")
-                self.graph.plot(v.xdata, v.ydata, ls="-", label=lab, marker="*")
-
-        elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-            self.graph.set_xlim(
-                -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
-            self.graph.set_xticks(
-                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
-            self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-            for k, v in extractions_indiv.items():
-                if k == cltuid:
-                    lab = trans_DYNCPR(u"You")
-                else:
-                    lab = trans_DYNCPR(u"The other")
-                if v.curve is None:
-                    v.curve, = self.graph.plot(
-                        v.xdata, v.ydata, ls="-", label=lab)
-
-        self.graph.set_ylim(-5, 25)
-        self.graph.set_yticks(range(0, 21, 5))
-        self.graph.set_ylabel(trans_DYNCPR(u"Extraction"))
-        self.graph.set_title(trans_DYNCPR(u"Individual extractions"))
-        self.graph.grid()
-        self.graph.legend(loc="lower left", ncol=pms.TAILLE_GROUPES,
-                          fontsize=10)
-        self.canvas.draw()
-
-
-class PlotResource(QWidget):
-    """
-    Display the curves with the total extraction of the group and the curve of
-    the stock of resource
-    """
-    def __init__(self, extraction_group, resource):
-        QWidget.__init__(self)
-
+        self.extractions_indiv = extractions_indiv
         self.extraction_group = extraction_group
-        self.resource = resource
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.fig = plt.figure(figsize=(10, 7))
+        self.fig = plt.figure()
         self.canvas = FigureCanvas(self.fig)
         layout.addWidget(self.canvas)
 
-        self.graph = self.fig.add_subplot(111)
+        self.graph = self.fig.add_subplot(111, position=[0.15, 0.15, 0.75, 0.75])
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
@@ -166,9 +113,11 @@ class PlotResource(QWidget):
             self.graph.plot(
                 self.extraction_group.xdata, self.extraction_group.ydata,
                 "-*k", label=trans_DYNCPR(u"Group extraction"))
-            self.graph.plot(
-                self.resource.xdata, self.resource.ydata,
-                "-*g", label=trans_DYNCPR(u"Stock of resource"))
+            for k, v in self.extractions_indiv.items():
+                if k == cltuid:
+                    self.graph.plot(
+                        v.xdata, v.ydata, ls="-",
+                        label=trans_DYNCPR(u"Your extraction"), marker="*")
 
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(
@@ -180,18 +129,110 @@ class PlotResource(QWidget):
                 self.extraction_group.curve, = self.graph.plot(
                     self.extraction_group.xdata, self.extraction_group.ydata,
                     "-k", label=trans_DYNCPR(u"Group extraction"))
+            for k, v in self.extractions_indiv.items():
+                if k == cltuid:
+                    if v.curve is None:
+                        v.curve, = self.graph.plot(
+                            v.xdata, v.ydata, ls="-",
+                            label=trans_DYNCPR(u"Your extraction"))
+
+        self.graph.set_ylim(-5, 25)
+        self.graph.set_yticks(range(0, 2*pms.DECISION_MAX + 1, 5))
+        self.graph.set_ylabel(trans_DYNCPR(u"Extraction"))
+        self.graph.set_title(trans_DYNCPR(u"Extractions"))
+        self.graph.grid()
+        self.graph.legend(loc="lower left", ncol=pms.TAILLE_GROUPES,
+                          fontsize=10)
+        self.canvas.draw()
+
+
+class PlotResource(QWidget):
+    """
+    Display the curves with the total extraction of the group and the curve of
+    the stock of resource
+    """
+    def __init__(self, resource):
+        QWidget.__init__(self)
+
+        self.resource = resource
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.fig = plt.figure()
+        self.canvas = FigureCanvas(self.fig)
+        layout.addWidget(self.canvas)
+
+        self.graph = self.fig.add_subplot(111, position=[0.15, 0.15, 0.75, 0.75])
+
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
+            self.graph.plot(
+                self.resource.xdata, self.resource.ydata,
+                "-*g", label=trans_DYNCPR(u"Stock of resource"))
+
+        elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.graph.set_xlim(
+                -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
+            self.graph.set_xticks(
+                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
+            self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
             if self.resource.curve is None:
                 self.resource.curve, = self.graph.plot(
                     self.resource.xdata, self.resource.ydata,
                     "-g", label=trans_DYNCPR(u"Stock of resource"))
 
-        self.graph.set_ylim(-15, 130)
-        self.graph.set_yticks(range(0, 121, 10))
+        self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 2)
+        self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 50))
         self.graph.set_ylabel(trans_DYNCPR(u"Stock of resource"))
         self.graph.set_title(
-            trans_DYNCPR(u"Group extraction and stock of resource"))
+            trans_DYNCPR(u"Stock of resource"))
         self.graph.grid()
         self.graph.legend(loc="lower left", ncol=2, fontsize=10)
+        self.canvas.draw()
+
+
+class PlotPayoff(QWidget):
+    def __init__(self, payoff_data):
+        super(PlotPayoff, self).__init__()
+
+        self.payoff_data = payoff_data
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self.fig = plt.figure()
+        self.canvas = FigureCanvas(self.fig)
+        layout.addWidget(self.canvas)
+
+        self.graph = self.fig.add_subplot(111, position=[0.15, 0.15, 0.75, 0.75])
+
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
+            self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
+            self.graph.plot(
+                self.payoff_data.xdata, self.payoff_data.ydata,
+                "-*k", label=trans_DYNCPR(u"Your cumulative payoff"))
+
+        elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.graph.set_xlim(
+                -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
+            self.graph.set_xticks(
+                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
+            self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
+            if self.payoff_data.curve is None:
+                self.payoff_data.curve, = self.graph.plot(
+                    self.payoff_data.xdata, self.payoff_data.ydata,
+                    "-k")
+
+        self.graph.set_ylim(-15, 130)
+        self.graph.set_yticks(range(0, 121, 10))
+        self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
+        self.graph.set_title(trans_DYNCPR(u"Your cumulative payoff"))
+        self.graph.grid()
         self.canvas.draw()
 
 
@@ -292,14 +333,17 @@ class GuiDecision(QDialog):
         # GRAPHICAL AREA
         # ----------------------------------------------------------------------
 
-        layout_plot = QHBoxLayout()
-        layout.addLayout(layout_plot)
+        self.plot_resource = PlotResource(self.remote.resource)
+        self.plot_resource.setMinimumHeight(350)
+        layout.addWidget(self.plot_resource)
         self.plot_extraction = PlotExtraction(
-            self.remote.le2mclt.uid, self.remote.extractions_indiv)
-        layout_plot.addWidget(self.plot_extraction)
-        self.plot_resource = PlotResource(
-            self.remote.extraction_group, self.remote.resource)
-        layout_plot.addWidget(self.plot_resource)
+            self.remote.le2mclt.uid, self.remote.extractions_indiv,
+            self.remote.extraction_group)
+        self.plot_extraction.setMinimumHeight(350)
+        layout.addWidget(self.plot_extraction)
+        # self.plot_payoff = PlotPayoff(self.remote.payoff_data)
+        # self.plot_payoff.setMinimumHeight(350)
+        # layout.addWidget(self.plot_payoff)
 
         # ----------------------------------------------------------------------
         # DECISION AREA
@@ -320,7 +364,7 @@ class GuiDecision(QDialog):
         layout.addWidget(self.buttons)
 
         self.setWindowTitle(trans_DYNCPR(u"Decision"))
-        self.adjustSize()
+        self.setWindowState(Qt.WindowMaximized)
         self.setFixedSize(self.size())
 
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
@@ -516,14 +560,14 @@ class GuiSummary(QDialog):
         self.remote.extraction_group.curve = None
         self.remote.resource.curve = None
 
-        layout_plot = QHBoxLayout()
+        layout_plot = QVBoxLayout()
         layout.addLayout(layout_plot)
-        self.plot_extraction = PlotExtraction(
-            self.remote.le2mclt.uid, self.remote.extractions_indiv)
-        layout_plot.addWidget(self.plot_extraction)
-        self.plot_resource = PlotResource(
-            self.remote.extraction_group, self.remote.resource)
+        self.plot_resource = PlotResource(self.remote.resource)
         layout_plot.addWidget(self.plot_resource)
+        self.plot_extraction = PlotExtraction(
+            self.remote.le2mclt.uid, self.remote.extractions_indiv,
+            self.remote.extraction_group)
+        layout_plot.addWidget(self.plot_extraction)
 
         # ----------------------------------------------------------------------
         # TABLE AREA
@@ -554,7 +598,7 @@ class GuiSummary(QDialog):
 
         # title and size
         self.setWindowTitle(le2mtrans(u"Summary"))
-        self.adjustSize()
+        self.setWindowState(Qt.WindowMaximized)
         self.setFixedSize(self.size())
 
     def _accept(self):
@@ -563,7 +607,15 @@ class GuiSummary(QDialog):
         except AttributeError:
             pass
         logger.info(u"{} send Ok summary".format(self.remote.le2mclt))
-        self.defered.callback(1)
+        # ----------------------------------------------------------------------
+        # we send back the different individual curves
+        # ----------------------------------------------------------------------
+        extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
+        data_indiv = {
+            "extractions": zip(extract_indiv.xdata, extract_indiv.ydata)
+        }
+        logger.debug("{} send {}".format(self.remote.le2mclt, data_indiv))
+        self.defered.callback(data_indiv)
         self.accept()
 
     def reject(self):

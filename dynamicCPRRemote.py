@@ -35,6 +35,7 @@ class RemoteDYNCPR(IRemote, QObject):
         self.resource = PlotData()
         for j in self.group_members:
             self.extractions_indiv[j] = PlotData()
+            self.payoffs_indiv[j] = PlotData()
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -161,7 +162,7 @@ class RemoteDYNCPR(IRemote, QObject):
             if pms.DYNAMIC_TYPE == pms.DISCRETE:
                 xdata = self.currentperiod
             elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-                xdata = (the_time - self.start_time).total_seconds()
+                xdata = the_time
 
         # ----------------------------------------------------------------------
         # group extraction
@@ -192,18 +193,18 @@ class RemoteDYNCPR(IRemote, QObject):
         #     self.__resource.curve))
 
         # ----------------------------------------------------------------------
-        # individual extractions
+        # individual extractions et payoffs
         # ----------------------------------------------------------------------
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].add_x(xdata)
+            self.payoffs_indiv[k].add_x(xdata)
             self.extractions_indiv[k].add_y(v["extraction"])
-            self.payoffs_indiv[k] = v["payoff"]
+            # self.payoffs_indiv[k].add_y(v["payoff"])
             try:
                 self.extractions_indiv[k].update_curve()
+                # self.payoffs_indiv[k].update_curve()
             except AttributeError:  # if period==0
                 pass
-        logger.debug("{} payoff {}".format(self.le2mclt,
-                                           self.payoffs_indiv[self.le2mclt.uid]))
 
         # ----------------------------------------------------------------------
         # log
@@ -233,7 +234,8 @@ class RemoteDYNCPR(IRemote, QObject):
         self.histo.append([period_content.get(k) for k in self.histo_vars])
         if self._le2mclt.simulation:
             logger.info("{} ok summary".format(self.le2mclt))
-            return 1
+            extrac_indiv = self.extractions_indiv[self.le2mclt.uid]
+            return {"extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata)}
         else:
             defered = defer.Deferred()
             summary_screen = GuiSummary(
