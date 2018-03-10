@@ -43,9 +43,9 @@ PARTIE_ESSAI = False
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = timedelta(seconds=400)  # can be changed in config screen
+CONTINUOUS_TIME_DURATION = timedelta(seconds=60)  # can be changed in config screen
 # time for the player to take a decision
-DISCRETE_DECISION_TIME = timedelta(minutes=1)
+DISCRETE_DECISION_TIME = timedelta(seconds=30)
 # milliseconds
 TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 
@@ -58,10 +58,11 @@ RESOURCE_GROWTH = 15
 # ------------------------------------------------------------------------------
 # FONCTION DE GAIN
 # ------------------------------------------------------------------------------
-param_a = 1.1
-param_b = 0.3
-param_c0 = 0.5
-param_c1 = 0.5
+param_a = 2
+param_b = 1
+param_c0 = 1.1
+param_c1 = 0.1
+tau = 0.1
 
 
 

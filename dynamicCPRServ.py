@@ -172,10 +172,6 @@ class Serveur(QObject):
                 yield(self.le2mserv.gestionnaire_experience.run_step(
                     "Decision", self._tous, "display_decision", time_start))
 
-                # period payoffs
-                self.le2mserv.gestionnaire_experience.compute_periodpayoffs(
-                    "dynamicCPR")
-
                 self.le2mserv.gestionnaire_experience.run_func(
                     self.groups, "update_data")
         

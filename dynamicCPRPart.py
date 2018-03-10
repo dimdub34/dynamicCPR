@@ -99,7 +99,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :return:
         """
         self.current_extraction = ExtractionsDYNCPR(extraction)
-        self.joueur.info(self.current_extraction)  # todo: change time reference
+        self.joueur.info(self.current_extraction)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
         self.joueur.group.add_extraction(
@@ -235,7 +235,7 @@ class ExtractionsDYNCPR(Base):
         self.DYNCPR_extraction_time = datetime.now()
 
     def __repr__(self):
-        return "extraction: {} - time: {}".format(
+        return "extraction: {}".format(
             self.DYNCPR_extraction, self.DYNCPR_extraction_time.strftime(
                 "%H:%M:%S"))
 

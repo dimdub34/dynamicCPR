@@ -110,6 +110,19 @@ class GroupDYNCPR(Base):
             self.current_resource = 0
 
         # ----------------------------------------------------------------------
+        # compute individual payoffs
+        # ----------------------------------------------------------------------
+        for j in self.players:
+            try:
+                j_extrac = self.current_players_extractions[j.uid]["extraction"]
+                j_payoff = pms.param_a * j_extrac - (pms.param_b / 2) * \
+                           pow(j_extrac, 2) - \
+                           (pms.param_c0 - pms.param_c1 * group_extrac) * j_extrac
+                self.current_players_extractions[j.uid]["payoff"] = j_payoff
+            except KeyError:
+                pass  # only for the initial extraction
+
+        # ----------------------------------------------------------------------
         # update the remote
         # ----------------------------------------------------------------------
         for j in self.players_part:
@@ -136,14 +149,12 @@ class GroupDYNCPR(Base):
         # if continuous it is saved in the update_data method
         # ----------------------------------------------------------------------
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            # todo: check if reference or value
             self.previous_extraction = self.current_extraction
             self.current_extraction = GroupExtractionDYNCPR(
                 period, extraction.DYNCPR_extraction_time, group_extrac,
                 self.current_resource)
             self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
             self.extractions.append(self.current_extraction)
-            # todo: compute individual payoffs
 
         self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
             self.uid_short, group_extrac))

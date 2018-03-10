@@ -295,7 +295,7 @@ class GuiInitialExtraction(QDialog):
 
 
 # ==============================================================================
-# DECISION SCREEN
+# GAME SCREEN
 # ==============================================================================
 
 
@@ -308,42 +308,59 @@ class GuiDecision(QDialog):
         # ----------------------------------------------------------------------
         self.remote = remote
         self.defered = defered
-        self.historique = GuiHistorique(self, self.remote.histo)
 
         layout = QVBoxLayout(self)
 
         # ----------------------------------------------------------------------
         # HEAD AREA
         # ----------------------------------------------------------------------
+        layout_head = QHBoxLayout()
+        layout.addLayout(layout_head, 0)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            wperiod = WPeriod(self.remote.currentperiod, self.historique)
-            layout.addWidget(wperiod)
+            layout_head.addWidget(
+                QLabel(le2mtrans(u"Period") +
+                       " {}".format(self.remote.currentperiod)), 0, Qt.AlignLeft)
 
-        wexplanation = WExplication(
-            text=texts_DYNCPR.EXTRACTION, size=(450, 80), parent=self)
-        layout.addWidget(wexplanation)
-
+        wtimer = None
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             wtimer = WCompterebours(
                 self, pms.CONTINUOUS_TIME_DURATION, lambda: None)
-            layout.addWidget(wtimer)
+        elif pms.DYNAMIC_TYPE == pms.DISCRETE:
+            time = timedelta(seconds=7) if self.remote.le2mclt.automatique else \
+                pms.DISCRETE_DECISION_TIME
+            wtimer = WCompterebours(self, time, self._accept)
+        layout_head.addWidget(wtimer, 0, Qt.AlignLeft)
+        layout_head.addStretch()
 
         # ----------------------------------------------------------------------
         # GRAPHICAL AREA
         # ----------------------------------------------------------------------
 
-        self.plot_resource = PlotResource(self.remote.resource)
-        self.plot_resource.setMinimumHeight(350)
-        layout.addWidget(self.plot_resource)
+        self.plot_layout = QGridLayout()
+        layout.addLayout(self.plot_layout)
+        # extractions (indiv + group)
         self.plot_extraction = PlotExtraction(
             self.remote.le2mclt.uid, self.remote.extractions_indiv,
             self.remote.extraction_group)
-        self.plot_extraction.setMinimumHeight(350)
-        layout.addWidget(self.plot_extraction)
-        # self.plot_payoff = PlotPayoff(self.remote.payoff_data)
-        # self.plot_payoff.setMinimumHeight(350)
-        # layout.addWidget(self.plot_payoff)
+        self.plot_layout.addWidget(self.plot_extraction, 0, 0)
+        # payoff indiv
+        self.plot_payoff = PlotPayoff(
+            self.remote.payoffs_indiv[self.remote.le2mclt.uid])
+        self.plot_layout.addWidget(self.plot_payoff, 0, 1)
+        # resource
+        self.plot_resource = PlotResource(self.remote.resource)
+        self.plot_layout.addWidget(self.plot_resource, 1, 0)
+        # value in text mode
+        widget_infos = QWidget()
+        widget_infos.setLayout(QVBoxLayout())
+        self.textEdit_infos = QTextEdit()
+        self.textEdit_infos.setReadOnly(True)
+        self.textEdit_infos.setHtml(self.remote.text_infos)
+        widget_infos.layout().addWidget(self.textEdit_infos)
+        self.plot_layout.addWidget(widget_infos, 1, 1)
+        self.plot_layout.setColumnStretch(0, 1)
+        self.plot_layout.setColumnStretch(1, 1)
 
         # ----------------------------------------------------------------------
         # DECISION AREA
@@ -359,57 +376,29 @@ class GuiDecision(QDialog):
         # FOOT AREA
         # ----------------------------------------------------------------------
 
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        self.buttons.accepted.connect(self._accept)
-        layout.addWidget(self.buttons)
-
         self.setWindowTitle(trans_DYNCPR(u"Decision"))
-        self.setWindowState(Qt.WindowMaximized)
-        self.setFixedSize(self.size())
 
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-            self.buttons.setEnabled(False)
             self.extract_dec.slider.sliderReleased.connect(self.send_extrac)
             if self.remote.le2mclt.automatique:
                 self.extract_dec.slider.valueChanged.connect(self.send_extrac)
             self.timer_continuous = QTimer()
-            self.timer_continuous.timeout.connect(
-                self.update_data_and_graphs)
+            self.timer_continuous.timeout.connect(self.update_data_and_graphs)
             self.timer_continuous.start(
                 int(pms.TIMER_UPDATE.total_seconds())*1000)
             self.remote.end_of_time.connect(self.end_of_time)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE and self.remote.le2mclt.automatique:
-            self.timer_automatique = QTimer()
             self.extract_dec.slider.setValue(random.randint(
-                pms.DECISION_MIN,
-                pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
-            self.timer_automatique.setSingleShot(True)
-            self.timer_automatique.timeout.connect(
-                self.buttons.button(QDialogButtonBox.Ok).click)
-            self.timer_automatique.start(7000)
+                pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
 
     def reject(self):
         pass
     
     def _accept(self):
-        try:
-            self.timer_automatique.stop()
-        except AttributeError:
-            pass
-
         extraction = None
-
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             extraction = self.extract_dec.value()
-            if not self.remote.le2mclt.automatique:
-                confirmation = QMessageBox.question(
-                    self, le2mtrans(u"Confirmation"),
-                    le2mtrans(u"Do you confirm your choice?"),
-                    QMessageBox.No | QMessageBox.Yes)
-                if confirmation != QMessageBox.Yes:
-                    return
-
         logger.info(u"{} send {}".format(self.remote.le2mclt, extraction))
         super(GuiDecision, self).accept()
         self.defered.callback(extraction)
@@ -427,17 +416,96 @@ class GuiDecision(QDialog):
                     pms.DECISION_MAX * int(1 / pms.DECISION_STEP)))
         self.plot_extraction.canvas.draw()
         self.plot_resource.canvas.draw()
+        self.plot_payoff.canvas.draw()
+        self.textEdit_infos.setHtml(self.remote.text_infos)
 
     def end_of_time(self):
         self.timer_continuous.stop()
         self.extract_dec.setEnabled(False)
-        self.buttons.setEnabled(True)
+        self._accept()
+
+
+class GuiSummary(QDialog):
+    def __init__(self, remote, defered, the_text=""):
+        super(GuiSummary, self).__init__(remote.le2mclt.screen)
+
+        self.remote = remote
+        self.defered = defered
+
+        layout = QVBoxLayout(self)
+
+        # ----------------------------------------------------------------------
+        # GRAPHICAL AREA
+        # ----------------------------------------------------------------------
+        for v in self.remote.extractions_indiv.values():
+            v.curve = None
+        self.remote.extraction_group.curve = None
+        self.remote.resource.curve = None
+
+        # ----------------------------------------------------------------------
+        # GRAPHICAL AREA
+        # ----------------------------------------------------------------------
+
+        self.plot_layout = QGridLayout()
+        layout.addLayout(self.plot_layout)
+        # extractions (indiv + group)
+        self.plot_extraction = PlotExtraction(
+            self.remote.le2mclt.uid, self.remote.extractions_indiv,
+            self.remote.extraction_group)
+        self.plot_layout.addWidget(self.plot_extraction, 0, 0)
+        # payoff indiv
+        self.plot_payoff = PlotPayoff(
+            self.remote.payoffs_indiv[self.remote.le2mclt.uid])
+        self.plot_layout.addWidget(self.plot_payoff, 0, 1)
+        # resource
+        self.plot_resource = PlotResource(self.remote.resource)
+        self.plot_layout.addWidget(self.plot_resource, 1, 0)
+        # value in text mode
+        widget_infos = QWidget()
+        widget_infos.setLayout(QVBoxLayout())
+        self.textEdit_infos = QTextEdit()
+        self.textEdit_infos.setReadOnly(True)
+        widget_infos.layout().addWidget(self.textEdit_infos)
+        self.plot_layout.addWidget(widget_infos, 1, 1)
+        self.plot_layout.setColumnStretch(0, 1)
+        self.plot_layout.setColumnStretch(1, 1)
+
+        # ----------------------------------------------------------------------
+        # FINALIZE THE DIALOG
+        # ----------------------------------------------------------------------
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.accepted.connect(self._accept)
+        layout.addWidget(buttons)
+
+        # auto
         if self.remote.le2mclt.automatique:
             self.timer_automatique = QTimer()
-            self.timer_automatique.setSingleShot(True)
             self.timer_automatique.timeout.connect(
-                self.buttons.button(QDialogButtonBox.Ok).click)
+                buttons.button(QDialogButtonBox.Ok).click)
             self.timer_automatique.start(7000)
+
+        # title and size
+        self.setWindowTitle(le2mtrans(u"Summary"))
+
+    def _accept(self):
+        try:
+            self.timer_automatique.stop()
+        except AttributeError:
+            pass
+        # ----------------------------------------------------------------------
+        # we send back the different individual curves
+        # ----------------------------------------------------------------------
+        extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
+        data_indiv = {
+            "extractions": zip(extract_indiv.xdata, extract_indiv.ydata)
+        }
+        logger.debug("{} send curves".format(self.remote.le2mclt))
+        self.defered.callback(data_indiv)
+        self.accept()
+
+    def reject(self):
+        pass
 
 
 # ==============================================================================
@@ -527,99 +595,6 @@ class DConfigure(QDialog):
             hours=time_continuous.hour, minutes=time_continuous.minute,
             seconds=time_continuous.second)
         self.accept()
-
-
-# ==============================================================================
-# SUMMARY SCREEN
-# ==============================================================================
-
-
-class GuiSummary(QDialog):
-    def __init__(self, remote, defered, the_text=""):
-        super(GuiSummary, self).__init__(remote.le2mclt.screen)
-
-        self.remote = remote
-        self.defered = defered
-        self.historique = GuiHistorique(self, self.remote.histo)
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            wperiod = WPeriod(self.remote.currentperiod, self.historique)
-            layout.addWidget(wperiod)
-
-        wexplanation = WExplication(text=the_text, size=(450, 80), parent=self)
-        layout.addWidget(wexplanation)
-
-        # ----------------------------------------------------------------------
-        # GRAPHICAL AREA
-        # ----------------------------------------------------------------------
-        for v in self.remote.extractions_indiv.values():
-            v.curve = None
-        self.remote.extraction_group.curve = None
-        self.remote.resource.curve = None
-
-        layout_plot = QVBoxLayout()
-        layout.addLayout(layout_plot)
-        self.plot_resource = PlotResource(self.remote.resource)
-        layout_plot.addWidget(self.plot_resource)
-        self.plot_extraction = PlotExtraction(
-            self.remote.le2mclt.uid, self.remote.extractions_indiv,
-            self.remote.extraction_group)
-        layout_plot.addWidget(self.plot_extraction)
-
-        # ----------------------------------------------------------------------
-        # TABLE AREA
-        # ----------------------------------------------------------------------
-        # ligne historique (entêtes et dernière ligne de l'historique)
-        histo_recap = [self.remote.histo[0], self.remote.histo[-1]]
-        self.tablemodel = TableModelHistorique(histo_recap)
-        self.widtableview = WTableview(parent=self, tablemodel=self.tablemodel,
-                                       size=(500, 90))
-        self.widtableview.ui.tableView.verticalHeader().setResizeMode(
-            QHeaderView.Stretch)
-        layout.addWidget(self.widtableview)
-
-        # ----------------------------------------------------------------------
-        # FINALIZE THE DIALOG
-        # ----------------------------------------------------------------------
-
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.accepted.connect(self._accept)
-        layout.addWidget(buttons)
-
-        # auto
-        if self.remote.le2mclt.automatique:
-            self.timer_automatique = QTimer()
-            self.timer_automatique.timeout.connect(
-                buttons.button(QDialogButtonBox.Ok).click)
-            self.timer_automatique.start(7000)
-
-        # title and size
-        self.setWindowTitle(le2mtrans(u"Summary"))
-        self.setWindowState(Qt.WindowMaximized)
-        self.setFixedSize(self.size())
-
-    def _accept(self):
-        try:
-            self.timer_automatique.stop()
-        except AttributeError:
-            pass
-        logger.info(u"{} send Ok summary".format(self.remote.le2mclt))
-        # ----------------------------------------------------------------------
-        # we send back the different individual curves
-        # ----------------------------------------------------------------------
-        extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
-        data_indiv = {
-            "extractions": zip(extract_indiv.xdata, extract_indiv.ydata)
-        }
-        logger.debug("{} send {}".format(self.remote.le2mclt, data_indiv))
-        self.defered.callback(data_indiv)
-        self.accept()
-
-    def reject(self):
-        pass
 
 
 if __name__ == "__main__":

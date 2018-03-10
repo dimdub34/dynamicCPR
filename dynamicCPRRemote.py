@@ -33,6 +33,7 @@ class RemoteDYNCPR(IRemote, QObject):
         self.payoffs_indiv = dict()
         self.extraction_group = PlotData()
         self.resource = PlotData()
+        self.text_infos = u""
         for j in self.group_members:
             self.extractions_indiv[j] = PlotData()
             self.payoffs_indiv[j] = PlotData()
@@ -137,7 +138,7 @@ class RemoteDYNCPR(IRemote, QObject):
         else:
             defered = defer.Deferred()
             dec_screen = GuiDecision(self, defered)
-            dec_screen.show()
+            dec_screen.showMaximized()
             return defered
 
     def remote_update_data(self, group_members_extractions, group_extraction,
@@ -174,10 +175,6 @@ class RemoteDYNCPR(IRemote, QObject):
         except AttributeError:
             pass
 
-        # logger.debug("extraction_group: xdata: {}, ydata: {}, curve: {}".format(
-        #     self.__extraction_group.xdata, self.__extraction_group.ydata,
-        #     self.__extraction_group.curve))
-
         # ----------------------------------------------------------------------
         # resource
         # ----------------------------------------------------------------------
@@ -188,10 +185,6 @@ class RemoteDYNCPR(IRemote, QObject):
         except AttributeError:
             pass
 
-        # logger.debug("resource: xdata: {}, ydata: {}, curve: {}".format(
-        #     self.__resource.xdata, self.__resource.ydata,
-        #     self.__resource.curve))
-
         # ----------------------------------------------------------------------
         # individual extractions et payoffs
         # ----------------------------------------------------------------------
@@ -199,19 +192,41 @@ class RemoteDYNCPR(IRemote, QObject):
             self.extractions_indiv[k].add_x(xdata)
             self.payoffs_indiv[k].add_x(xdata)
             self.extractions_indiv[k].add_y(v["extraction"])
-            # self.payoffs_indiv[k].add_y(v["payoff"])
+            # compute the cumulative payoff
+            if not self.payoffs_indiv[k]:
+                self.payoffs_indiv[k].add_y(v["payoff"])
+            else:
+                self.payoffs_indiv[k].add_y(
+                    sum(self.payoffs_indiv[k].ydata) + v["payoff"])
             try:
                 self.extractions_indiv[k].update_curve()
-                # self.payoffs_indiv[k].update_curve()
+                self.payoffs_indiv[k].update_curve()
             except AttributeError:  # if period==0
                 pass
 
         # ----------------------------------------------------------------------
+        # text information
+        # ----------------------------------------------------------------------
+        old = self.text_infos
+        self.text_infos = texts_DYNCPR.trans_DYNCPR(u"Time") + \
+            u": {}".format(int(xdata)) + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your extraction") + \
+            u": {:.2f}".format(self.extractions_indiv[self.le2mclt.uid].ydata[-1]) + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The group extraction") + \
+            u": {:.2f}".format(self.extraction_group.ydata[-1]) + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The resource stock") + \
+            u": {:.2f}".format(self.resource.ydata[-1]) + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your cumulative payoff") + \
+            u": {:.2f}".format(self.payoffs_indiv[self.le2mclt.uid].ydata[-1])
+        self.text_infos += u"<br>{}<br>{}".format(20*"-", old)
+
+        # ----------------------------------------------------------------------
         # log
         # ----------------------------------------------------------------------
-        logger.info("{} update group {:.2f} resource {:.2f}".format(
+        logger.info("{} update group {:.2f} resource {:.2f} payoff: {:.2f}".format(
             self.le2mclt, self.extraction_group.ydata[-1],
-            self.resource.ydata[-1]))
+            self.resource.ydata[-1],
+            self.payoffs_indiv[self.le2mclt.uid].ydata[-1]))
 
     def remote_end_update_data(self):
         logger.debug("{}: call of remote_end_data".format(self.le2mclt))
@@ -233,14 +248,14 @@ class RemoteDYNCPR(IRemote, QObject):
         logger.info(u"{} Summary".format(self._le2mclt.uid))
         self.histo.append([period_content.get(k) for k in self.histo_vars])
         if self._le2mclt.simulation:
-            logger.info("{} ok summary".format(self.le2mclt))
+            logger.info("{} send curves".format(self.le2mclt))
             extrac_indiv = self.extractions_indiv[self.le2mclt.uid]
             return {"extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata)}
         else:
             defered = defer.Deferred()
             summary_screen = GuiSummary(
                 self, defered, texts_DYNCPR.get_text_summary(period_content))
-            summary_screen.show()
+            summary_screen.showMaximized()
             return defered
 
 
