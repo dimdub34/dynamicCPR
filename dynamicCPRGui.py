@@ -225,8 +225,8 @@ class PlotPayoff(QWidget):
                 self.payoff_data.xdata, self.payoff_data.ydata,
                 "-k", marker=curve_marker)
 
-        self.graph.set_ylim(0, 15000)
-        self.graph.set_yticks(range(0, 15001, 1000))
+        self.graph.set_ylim(0, 50000)
+        self.graph.set_yticks(range(0, 51000, 5000))
         self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
         self.graph.set_title(trans_DYNCPR(u"Your cumulative payoff"))
         self.graph.grid()
