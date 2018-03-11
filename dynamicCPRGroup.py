@@ -19,7 +19,7 @@ class GroupDYNCPR(Base):
     uid = Column(String(30), primary_key=True)
     session_id = Column(Integer)
     DYNCPR_dynamic_type = Column(Integer)
-    DYNCRP_trial = Column(Boolean)
+    DYNCPR_trial = Column(Boolean)
     DYNCPR_sequence = Column(Integer)
     DYNCPR_treatment = Column(Integer)
     extractions = relationship("GroupExtractionDYNCPR")
