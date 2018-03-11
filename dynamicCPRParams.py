@@ -17,9 +17,12 @@ from datetime import timedelta
 
 BASELINE = 0
 TREATMENTS_NAMES = {BASELINE: "Baseline"}
+
+# used to set DYNCPR_dynamic_type
 CONTINUOUS = 0
 DISCRETE = 1
 IMPULSORY = 2  # future
+
 # used to store the curve (DYNCRP_curve_type)
 EXTRACTION = 0
 PAYOFF = 1
