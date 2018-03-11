@@ -117,7 +117,7 @@ class GroupDYNCPR(Base):
                 j_extrac = self.current_players_extractions[j.uid]["extraction"]
                 j_payoff = pms.param_a * j_extrac - (pms.param_b / 2) * \
                            pow(j_extrac, 2) - \
-                           (pms.param_c0 - pms.param_c1 * group_extrac) * j_extrac
+                           (pms.param_c0 - pms.param_c1 * self.current_resource) * j_extrac
                 self.current_players_extractions[j.uid]["payoff"] = j_payoff
             except KeyError:
                 pass  # only for the initial extraction

@@ -37,6 +37,7 @@ class RemoteDYNCPR(IRemote, QObject):
         for j in self.group_members:
             self.extractions_indiv[j] = PlotData()
             self.payoffs_indiv[j] = PlotData()
+        self.decision_screen = None
 
     def remote_configure(self, params, server_part, group_members):
         """
@@ -57,12 +58,12 @@ class RemoteDYNCPR(IRemote, QObject):
         :param period: the current period
         :return:
         """
-        logger.info(u"{} Period {}".format(self._le2mclt.uid, period))
+        logger.info(u"{} Period {}".format(self.le2mclt, period))
         self.currentperiod = period
-        if self.currentperiod <= 1:
-            del self.histo[:]
-            self.histo_vars = texts_DYNCPR.get_histo_vars()
-            self.histo.append(texts_DYNCPR.get_histo_head())
+        # if self.currentperiod <= 1:
+        #     del self.histo[:]
+        #     self.histo_vars = texts_DYNCPR.get_histo_vars()
+        #     self.histo.append(texts_DYNCPR.get_histo_head())
 
     def remote_set_initial_extraction(self):
         """
@@ -87,6 +88,7 @@ class RemoteDYNCPR(IRemote, QObject):
         :param time_start: the time is given by the server
         :return: deferred
         """
+
         self.start_time = time_start
 
         # ----------------------------------------------------------------------
@@ -137,16 +139,20 @@ class RemoteDYNCPR(IRemote, QObject):
 
         else:
             defered = defer.Deferred()
-            dec_screen = GuiDecision(self, defered)
-            dec_screen.showMaximized()
+            if self.decision_screen is None:
+                self.decision_screen = GuiDecision(self, defered)
+                self.decision_screen.showMaximized()
+            else:
+                self.decision_screen.defered = defered
+                self.decision_screen.update_data_and_graphs()
             return defered
 
     def remote_update_data(self, group_members_extractions, group_extraction,
                            resource_stock, the_time):
         """
-        called by the players as soon as there is a new extraction in the
-        group.
-        Used only in the continuous treatment
+        called by the server:
+        - every second if dynamic == continuous
+        - every period if dynamic == discrete
         :param group_members_extractions:
         :param group_extraction: the total extraction of the group
         :param resource_stock: the stock of resource
@@ -193,11 +199,11 @@ class RemoteDYNCPR(IRemote, QObject):
             self.payoffs_indiv[k].add_x(xdata)
             self.extractions_indiv[k].add_y(v["extraction"])
             # compute the cumulative payoff
-            if not self.payoffs_indiv[k]:
+            if not self.payoffs_indiv[k].ydata:
                 self.payoffs_indiv[k].add_y(v["payoff"])
             else:
                 self.payoffs_indiv[k].add_y(
-                    sum(self.payoffs_indiv[k].ydata) + v["payoff"])
+                    self.payoffs_indiv[k].ydata[-1] + v["payoff"])
             try:
                 self.extractions_indiv[k].update_curve()
                 self.payoffs_indiv[k].update_curve()
@@ -236,8 +242,7 @@ class RemoteDYNCPR(IRemote, QObject):
             self.continuous_simulation_timer.stop()
             self.continuous_simulation_defered.callback(None)
 
-        if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-            self.end_of_time.emit()
+        self.end_of_time.emit()
 
     def remote_display_summary(self, period_content):
         """
@@ -246,11 +251,15 @@ class RemoteDYNCPR(IRemote, QObject):
         :return: deferred
         """
         logger.info(u"{} Summary".format(self._le2mclt.uid))
-        self.histo.append([period_content.get(k) for k in self.histo_vars])
+        # self.histo.append([period_content.get(k) for k in self.histo_vars])
         if self._le2mclt.simulation:
             logger.info("{} send curves".format(self.le2mclt))
             extrac_indiv = self.extractions_indiv[self.le2mclt.uid]
-            return {"extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata)}
+            payoffs_indiv = self.payoffs_indiv[self.le2mclt.uid]
+            return {
+                "extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata),
+                "payoffs": zip(payoffs_indiv.xdata, payoffs_indiv.ydata)
+            }
         else:
             defered = defer.Deferred()
             summary_screen = GuiSummary(

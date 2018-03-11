@@ -174,8 +174,13 @@ class Serveur(QObject):
 
                 self.le2mserv.gestionnaire_experience.run_func(
                     self.groups, "update_data")
-        
+
+            self.slot_time_elapsed()
+
+        # ----------------------------------------------------------------------
         # summary
+        # ----------------------------------------------------------------------
+
         yield(self.le2mserv.gestionnaire_experience.run_step(
             le2mtrans(u"Summary"), self._tous, "display_summary"))
         

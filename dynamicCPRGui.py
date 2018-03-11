@@ -109,32 +109,30 @@ class PlotExtraction(QWidget):
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
-            self.graph.plot(
-                self.extraction_group.xdata, self.extraction_group.ydata,
-                "-*k", label=trans_DYNCPR(u"Group extraction"))
-            for k, v in self.extractions_indiv.items():
-                if k == cltuid:
-                    self.graph.plot(
-                        v.xdata, v.ydata, ls="-",
-                        label=trans_DYNCPR(u"Your extraction"), marker="*")
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1), 5)
+            curve_marker = "*"
 
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(
                 -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
             self.graph.set_xticks(
-                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
+                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 30))
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-            if self.extraction_group.curve is None:
-                self.extraction_group.curve, = self.graph.plot(
-                    self.extraction_group.xdata, self.extraction_group.ydata,
-                    "-k", label=trans_DYNCPR(u"Group extraction"))
-            for k, v in self.extractions_indiv.items():
-                if k == cltuid:
-                    if v.curve is None:
-                        v.curve, = self.graph.plot(
-                            v.xdata, v.ydata, ls="-",
-                            label=trans_DYNCPR(u"Your extraction"))
+            curve_marker = ""
+
+        # curves
+        if self.extraction_group.curve is None:
+            self.extraction_group.curve, = self.graph.plot(
+                self.extraction_group.xdata, self.extraction_group.ydata,
+                "-k", marker=curve_marker,
+                label=trans_DYNCPR(u"Group extraction"))
+
+        for k, v in self.extractions_indiv.items():
+            if k == cltuid:
+                if v.curve is None:
+                    v.curve, = self.graph.plot(
+                        v.xdata, v.ydata, ls="-", marker=curve_marker,
+                        label=trans_DYNCPR(u"Your extraction"))
 
         self.graph.set_ylim(-5, 25)
         self.graph.set_yticks(range(0, 2*pms.DECISION_MAX + 1, 5))
@@ -168,21 +166,21 @@ class PlotResource(QWidget):
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
-            self.graph.plot(
-                self.resource.xdata, self.resource.ydata,
-                "-*g", label=trans_DYNCPR(u"Stock of resource"))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1), 5)
+            curve_marker = "*"
 
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(
                 -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
             self.graph.set_xticks(
-                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
+                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 30))
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-            if self.resource.curve is None:
-                self.resource.curve, = self.graph.plot(
-                    self.resource.xdata, self.resource.ydata,
-                    "-g", label=trans_DYNCPR(u"Stock of resource"))
+            curve_marker = ""
+
+        if self.resource.curve is None:
+            self.resource.curve, = self.graph.plot(
+                self.resource.xdata, self.resource.ydata,
+                "-g", marker=curve_marker)
 
         self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 2)
         self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 50))
@@ -190,7 +188,6 @@ class PlotResource(QWidget):
         self.graph.set_title(
             trans_DYNCPR(u"Stock of resource"))
         self.graph.grid()
-        self.graph.legend(loc="lower left", ncol=2, fontsize=10)
         self.canvas.draw()
 
 
@@ -212,24 +209,24 @@ class PlotPayoff(QWidget):
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.graph.set_xlim(-1, pms.NOMBRE_PERIODES + 1)
             self.graph.set_xlabel(trans_DYNCPR(u"Periods"))
-            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1))
-            self.graph.plot(
-                self.payoff_data.xdata, self.payoff_data.ydata,
-                "-*k", label=trans_DYNCPR(u"Your cumulative payoff"))
+            self.graph.set_xticks(range(0, pms.NOMBRE_PERIODES + 1), 5)
+            curve_marker = "*"
 
         elif pms.DYNAMIC_TYPE == pms.CONTINUOUS:
             self.graph.set_xlim(
                 -5, pms.CONTINUOUS_TIME_DURATION.total_seconds() + 5)
             self.graph.set_xticks(
-                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 10))
+                range(0, int(pms.CONTINUOUS_TIME_DURATION.total_seconds())+1, 30))
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
-            if self.payoff_data.curve is None:
-                self.payoff_data.curve, = self.graph.plot(
-                    self.payoff_data.xdata, self.payoff_data.ydata,
-                    "-k")
+            curve_marker = ""
 
-        self.graph.set_ylim(-15, 130)
-        self.graph.set_yticks(range(0, 121, 10))
+        if self.payoff_data.curve is None:
+            self.payoff_data.curve, = self.graph.plot(
+                self.payoff_data.xdata, self.payoff_data.ydata,
+                "-k", marker=curve_marker)
+
+        self.graph.set_ylim(0, 15000)
+        self.graph.set_yticks(range(0, 15001, 1000))
         self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
         self.graph.set_title(trans_DYNCPR(u"Your cumulative payoff"))
         self.graph.grid()
@@ -318,19 +315,19 @@ class GuiDecision(QDialog):
         layout.addLayout(layout_head, 0)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            layout_head.addWidget(
-                QLabel(le2mtrans(u"Period") +
-                       " {}".format(self.remote.currentperiod)), 0, Qt.AlignLeft)
+            self.label_period = QLabel(
+                le2mtrans(u"Period") + u" {}".format(self.remote.currentperiod))
+            layout_head.addWidget(self.label_period, 0, Qt.AlignLeft)
 
-        wtimer = None
+        self.compte_rebours = None
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-            wtimer = WCompterebours(
+            self.compte_rebours = WCompterebours(
                 self, pms.CONTINUOUS_TIME_DURATION, lambda: None)
         elif pms.DYNAMIC_TYPE == pms.DISCRETE:
             time = timedelta(seconds=7) if self.remote.le2mclt.automatique else \
                 pms.DISCRETE_DECISION_TIME
-            wtimer = WCompterebours(self, time, self._accept)
-        layout_head.addWidget(wtimer, 0, Qt.AlignLeft)
+            self.compte_rebours = WCompterebours(self, time, self.send_extrac)
+        layout_head.addWidget(self.compte_rebours, 0, Qt.AlignLeft)
         layout_head.addStretch()
 
         # ----------------------------------------------------------------------
@@ -386,31 +383,32 @@ class GuiDecision(QDialog):
             self.timer_continuous.timeout.connect(self.update_data_and_graphs)
             self.timer_continuous.start(
                 int(pms.TIMER_UPDATE.total_seconds())*1000)
-            self.remote.end_of_time.connect(self.end_of_time)
 
         if pms.DYNAMIC_TYPE == pms.DISCRETE and self.remote.le2mclt.automatique:
             self.extract_dec.slider.setValue(random.randint(
                 pms.DECISION_MIN, pms.DECISION_MAX*int(1 / pms.DECISION_STEP)))
 
+        self.remote.end_of_time.connect(self.end_of_time)
+
     def reject(self):
         pass
     
-    def _accept(self):
-        extraction = None
-        if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            extraction = self.extract_dec.value()
-        logger.info(u"{} send {}".format(self.remote.le2mclt, extraction))
-        super(GuiDecision, self).accept()
-        self.defered.callback(extraction)
-
     def send_extrac(self):
         dec = self.extract_dec.value()
         logger.info("{} send {}".format(self.remote.le2mclt, dec))
-        self.remote.server_part.callRemote("new_extraction", dec)
+        if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.remote.server_part.callRemote("new_extraction", dec)
+        elif pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.defered.callback(dec)
 
     def update_data_and_graphs(self):
         if self.remote.le2mclt.automatique:
-            if random.random() < 0.33:
+            if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+                if random.random() < 0.33:
+                    self.extract_dec.slider.setValue(random.randint(
+                        pms.DECISION_MIN,
+                        pms.DECISION_MAX * int(1 / pms.DECISION_STEP)))
+            elif pms.DYNAMIC_TYPE == pms.DISCRETE:
                 self.extract_dec.slider.setValue(random.randint(
                     pms.DECISION_MIN,
                     pms.DECISION_MAX * int(1 / pms.DECISION_STEP)))
@@ -418,11 +416,19 @@ class GuiDecision(QDialog):
         self.plot_resource.canvas.draw()
         self.plot_payoff.canvas.draw()
         self.textEdit_infos.setHtml(self.remote.text_infos)
+        if pms.DYNAMIC_TYPE == pms.DISCRETE:
+            self.label_period.setText(le2mtrans(u"Period") + u" {}".format(
+                self.remote.currentperiod))
+            self.compte_rebours.restart()
 
     def end_of_time(self):
-        self.timer_continuous.stop()
-        self.extract_dec.setEnabled(False)
-        self._accept()
+        try:
+            self.timer_continuous.stop()
+        except AttributeError:  # if dynamic == discrete
+            pass
+        if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
+            self.defered.callback(None)
+        super(GuiDecision, self).accept()
 
 
 class GuiSummary(QDialog):
@@ -441,10 +447,8 @@ class GuiSummary(QDialog):
             v.curve = None
         self.remote.extraction_group.curve = None
         self.remote.resource.curve = None
-
-        # ----------------------------------------------------------------------
-        # GRAPHICAL AREA
-        # ----------------------------------------------------------------------
+        for v in self.remote.payoffs_indiv.values():
+            v.curve = None
 
         self.plot_layout = QGridLayout()
         layout.addLayout(self.plot_layout)
@@ -497,8 +501,10 @@ class GuiSummary(QDialog):
         # we send back the different individual curves
         # ----------------------------------------------------------------------
         extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
+        payoffs_indiv = self.remote.payoffs_indiv[self.remote.le2mclt.uid]
         data_indiv = {
-            "extractions": zip(extract_indiv.xdata, extract_indiv.ydata)
+            "extractions": zip(extract_indiv.xdata, extract_indiv.ydata),
+            "payoffs": zip(payoffs_indiv.xdata, payoffs_indiv.ydata)
         }
         logger.debug("{} send curves".format(self.remote.le2mclt))
         self.defered.callback(data_indiv)

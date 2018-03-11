@@ -5,7 +5,7 @@ from datetime import datetime
 from twisted.internet import defer
 from twisted.spread import pb  # because some functions can be called remotely
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Float, Boolean, ForeignKey, DateTime
 from server.servbase import Base
 from server.servparties import Partie
 from util.utiltools import get_module_attributes
@@ -23,8 +23,10 @@ class PartieDYNCPR(Partie, pb.Referenceable):
     repetitions = relationship('RepetitionsDYNCPR')
     curves = relationship('CurveDYNCPR')
 
+    DYNCPR_dynamic_type = Column(Integer)
+    DYNCPR_trial = Column(Boolean)
     DYNCPR_current_sequence = Column(Integer)
-    DYNCPR_treatment = Column(Integer, default=pms.TREATMENT)
+    DYNCPR_treatment = Column(Integer)
     DYNCPR_group = Column(Integer, default=None)
     DYNCPR_gain_ecus = Column(Float)
     DYNCPR_gain_euros = Column(Float)
@@ -41,6 +43,9 @@ class PartieDYNCPR(Partie, pb.Referenceable):
     @defer.inlineCallbacks
     def configure(self):
         logger.debug(u"{} Configure".format(self.joueur))
+        self.DYNCPR_dynamic_type = pms.DYNAMIC_TYPE
+        self.DYNCPR_treatment = pms.TREATMENT
+        self.DYNCPR_trial = pms.PARTIE_ESSAI
         # we send self because some methods are called remotely
         # we send also the group composition
         yield (self.remote.callRemote(
@@ -150,7 +155,11 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             curve_data = CurveDYNCPR(pms.EXTRACTION, x, y)
             self.le2mserv.gestionnaire_base.ajouter(curve_data)
             self.curves.append(curve_data)
-
+        payoff_indiv = data_indiv["payoffs"]
+        for x, y in payoff_indiv:
+            curve_data = CurveDYNCPR(pms.PAYOFF, x, y)
+            self.le2mserv.gestionnaire_base.ajouter(curve_data)
+            self.curves.append(curve_data)
         self.joueur.info("Ok")
         self.joueur.remove_waitmode()
 
@@ -169,6 +178,8 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             self.DYNCPR_gain_euros = 0
 
         else:
+            self.currentperiod.DYNCPR_cumulativepayoff = \
+                self.curves[-1].DYNCPR_curve_y
             self.DYNCPR_gain_ecus = self.currentperiod.DYNCPR_cumulativepayoff
             self.DYNCPR_gain_euros = float(self.DYNCPR_gain_ecus) * \
                                      float(pms.TAUX_CONVERSION)
