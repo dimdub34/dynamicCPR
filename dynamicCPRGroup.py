@@ -18,6 +18,7 @@ class GroupDYNCPR(Base):
     __tablename__ = "group_dynamicCPR"
     uid = Column(String(30), primary_key=True)
     session_id = Column(Integer)
+    DYNCPR_dynamic_type = Column(Integer)
     DYNCRP_trial = Column(Boolean)
     DYNCPR_sequence = Column(Integer)
     DYNCPR_treatment = Column(Integer)
@@ -25,12 +26,21 @@ class GroupDYNCPR(Base):
 
     def __init__(self, le2mserv, group_id, player_list, sequence):
         self.le2mserv = le2mserv
+
+        # ----------------------------------------------------------------------
+        # fields of the table
+        # ----------------------------------------------------------------------
         self.uid = group_id
         self.session_id = self.le2mserv.gestionnaire_base.session.id
+        self.DYNCPR_dynamic_type = pms.DYNAMIC_TYPE
         self.DYNCPR_sequence = sequence
         self.DYNCPR_treatment = pms.TREATMENT
         self.DYNCRP_trial = pms.PARTIE_ESSAI
         self.__players = player_list
+
+        # ----------------------------------------------------------------------
+        # instantiations
+        # ----------------------------------------------------------------------
         for p in self.players_part:
             p.DYNCPR_group = self.uid
         self.current_players_extractions = dict()
