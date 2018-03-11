@@ -3,7 +3,7 @@
 # built-in
 from server.servbase import Base
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Float, String, ForeignKey, Boolean
 import logging
 from PyQt4.QtCore import QTimer
 from datetime import datetime
@@ -18,6 +18,7 @@ class GroupDYNCPR(Base):
     __tablename__ = "group_dynamicCPR"
     uid = Column(String(30), primary_key=True)
     session_id = Column(Integer)
+    DYNCRP_trial = Column(Boolean)
     DYNCPR_sequence = Column(Integer)
     DYNCPR_treatment = Column(Integer)
     extractions = relationship("GroupExtractionDYNCPR")
@@ -28,6 +29,7 @@ class GroupDYNCPR(Base):
         self.session_id = self.le2mserv.gestionnaire_base.session.id
         self.DYNCPR_sequence = sequence
         self.DYNCPR_treatment = pms.TREATMENT
+        self.DYNCRP_trial = pms.PARTIE_ESSAI
         self.__players = player_list
         for p in self.players_part:
             p.DYNCPR_group = self.uid
