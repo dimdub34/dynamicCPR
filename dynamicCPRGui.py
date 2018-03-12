@@ -136,7 +136,7 @@ class PlotExtraction(QWidget):
 
         self.graph.set_ylim(-5, 25)
         self.graph.set_yticks(range(0, 2*pms.DECISION_MAX + 1, 5))
-        self.graph.set_ylabel(trans_DYNCPR(u"Extraction"))
+        self.graph.set_ylabel(trans_DYNCPR(u"Units"))
         self.graph.set_title(trans_DYNCPR(u"Extractions"))
         self.graph.grid()
         self.graph.legend(loc="lower left", ncol=pms.TAILLE_GROUPES,
@@ -180,13 +180,13 @@ class PlotResource(QWidget):
         if self.resource.curve is None:
             self.resource.curve, = self.graph.plot(
                 self.resource.xdata, self.resource.ydata,
-                "-g", marker=curve_marker)
+                "-k", marker=curve_marker)
 
         self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 2)
         self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 50))
-        self.graph.set_ylabel(trans_DYNCPR(u"Stock of resource"))
+        self.graph.set_ylabel(trans_DYNCPR(u"Units"))
         self.graph.set_title(
-            trans_DYNCPR(u"Stock of resource"))
+            trans_DYNCPR(u"Available resource"))
         self.graph.grid()
         self.canvas.draw()
 
@@ -228,7 +228,7 @@ class PlotPayoff(QWidget):
         self.graph.set_ylim(0, 50000)
         self.graph.set_yticks(range(0, 51000, 5000))
         self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
-        self.graph.set_title(trans_DYNCPR(u"Your cumulative payoff"))
+        self.graph.set_title(trans_DYNCPR(u"Your part payoff"))
         self.graph.grid()
         self.canvas.draw()
 

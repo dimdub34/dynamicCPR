@@ -25,6 +25,7 @@ class GroupDYNCPR(Base):
     extractions = relationship("GroupExtractionDYNCPR")
 
     def __init__(self, le2mserv, group_id, player_list, sequence):
+
         self.le2mserv = le2mserv
 
         # ----------------------------------------------------------------------
@@ -43,6 +44,7 @@ class GroupDYNCPR(Base):
         # ----------------------------------------------------------------------
         for p in self.players_part:
             p.DYNCPR_group = self.uid
+        self.current_period = 0
         self.current_players_extractions = dict()
         self.current_extraction = None
         self.current_resource = pms.RESOURCE_INITIAL_STOCK
@@ -105,7 +107,7 @@ class GroupDYNCPR(Base):
         group_extrac = sum(
             [e["extraction"] for e in self.current_players_extractions.values()])
         self.current_extraction = GroupExtractionDYNCPR(
-            0, the_time, group_extrac, self.current_resource)
+            self.current_period, the_time, group_extrac, self.current_resource)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.extractions.append(self.current_extraction)
         logger.debug(
@@ -143,7 +145,7 @@ class GroupDYNCPR(Base):
                 self.current_extraction.DYNCPR_group_extraction,
                 self.current_resource, the_time)
 
-    def add_extraction(self, player, extraction, period):
+    def add_extraction(self, player, extraction):
         """
 
         :param player: the player at the origin of the extraction
@@ -160,12 +162,12 @@ class GroupDYNCPR(Base):
         # individual payoffs
         # if continuous it is saved in the update_data method
         # ----------------------------------------------------------------------
-        if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            self.current_extraction = GroupExtractionDYNCPR(
-                period, extraction.DYNCPR_extraction_time, group_extrac,
-                self.current_resource)
-            self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
-            self.extractions.append(self.current_extraction)
+        # if pms.DYNAMIC_TYPE == pms.DISCRETE:
+        #     self.current_extraction = GroupExtractionDYNCPR(
+        #         period, extraction.DYNCPR_extraction_time, group_extrac,
+        #         self.current_resource)
+        #     self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
+        #     self.extractions.append(self.current_extraction)
 
         self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
             self.uid_short, group_extrac))

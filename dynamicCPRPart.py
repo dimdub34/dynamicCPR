@@ -71,10 +71,10 @@ class PartieDYNCPR(Partie, pb.Referenceable):
     @defer.inlineCallbacks
     def set_initial_extraction(self):
         """
-        The player set his initial extraction, before to start the continuous
-        game
+        The player set his initial extraction, before to start the game
         :return:
         """
+        self.time_start = datetime.now()  # needed by remote_new_extraction
         initial_extraction = yield (self.remote.callRemote(
             "set_initial_extraction"))
         self.remote_new_extraction(initial_extraction)
@@ -94,9 +94,9 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             "display_decision", self.time_start))
         self.currentperiod.DYNCPR_decisiontime = \
             (datetime.now() - self.time_start).total_seconds()
-        self.joueur.remove_waitmode()
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.remote_new_extraction(extraction)
+        self.joueur.remove_waitmode()
 
     def remote_new_extraction(self, extraction):
         """
@@ -106,12 +106,11 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :return:
         """
         self.current_extraction = ExtractionsDYNCPR(
-            extraction, (self.time_start  - datetime.now()).total_seconds())
+            extraction, (self.time_start - datetime.now()).total_seconds())
         self.joueur.info(self.current_extraction)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
-        self.joueur.group.add_extraction(
-            self.joueur, self.current_extraction, self.currentperiod.number)
+        self.joueur.group.add_extraction(self.joueur, self.current_extraction)
 
     @defer.inlineCallbacks
     def end_update_data(self):
@@ -241,7 +240,7 @@ class ExtractionsDYNCPR(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     repetitions_id = Column(Integer, ForeignKey("partie_dynamicCPR_repetitions.id"))
     DYNCPR_extraction = Column(Float)
-    DYNCPR_extraction_time = Column(DateTime)
+    DYNCPR_extraction_time = Column(Float)
     DYNCPR_payoff = Column(Float)
 
     def __init__(self, extraction, the_time):

@@ -214,15 +214,17 @@ class RemoteDYNCPR(IRemote, QObject):
         # text information
         # ----------------------------------------------------------------------
         old = self.text_infos
-        self.text_infos = texts_DYNCPR.trans_DYNCPR(u"Time") + \
-            u": {}".format(int(xdata)) + \
+        the_time_str = texts_DYNCPR.trans_DYNCPR(u"Instant") if \
+            pms.DYNAMIC_TYPE == pms.CONTINUOUS else \
+            texts_DYNCPR.trans_DYNCPR(u"Period")
+        self.text_infos = the_time_str + u": {}".format(int(xdata)) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your extraction") + \
             u": {:.2f}".format(self.extractions_indiv[self.le2mclt.uid].ydata[-1]) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The group extraction") + \
             u": {:.2f}".format(self.extraction_group.ydata[-1]) + \
-            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The resource stock") + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The available resource") + \
             u": {:.2f}".format(self.resource.ydata[-1]) + \
-            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your cumulative payoff") + \
+            u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your part payoff") + \
             u": {:.2f}".format(self.payoffs_indiv[self.le2mclt.uid].ydata[-1])
         self.text_infos += u"<br>{}<br>{}".format(20*"-", old)
 
