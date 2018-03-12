@@ -55,17 +55,24 @@ TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 # ------------------------------------------------------------------------------
 # RESOURCE
 # ------------------------------------------------------------------------------
+
 RESOURCE_INITIAL_STOCK = 500
-RESOURCE_GROWTH = 15
+RESOURCE_GROWTH = 25
 
 # ------------------------------------------------------------------------------
 # FONCTION DE GAIN
 # ------------------------------------------------------------------------------
-param_a = 2
-param_b = 1
-param_c0 = 1.5
+
+param_a = 2.5
+param_b = 1.8
+param_c0 = 2
 param_c1 = 0.1
 tau = 0.1
 
 
+def get_infinite_payoff(dyn_type, H):
+    if dyn_type == DISCRETE:
+        return 2887.505958 + 5.024172262 * H + 0.001545865057 * pow(H, 2)
+    elif dyn_type == CONTINUOUS:
+        return 2894.217061 + 5.048322591 * H + 0.01195379425 * pow(H, 2)
 
