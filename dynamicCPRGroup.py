@@ -36,7 +36,7 @@ class GroupDYNCPR(Base):
         self.DYNCPR_dynamic_type = pms.DYNAMIC_TYPE
         self.DYNCPR_sequence = sequence
         self.DYNCPR_treatment = pms.TREATMENT
-        self.DYNCRP_trial = pms.PARTIE_ESSAI
+        self.DYNCPR_trial = pms.PARTIE_ESSAI
         self.__players = player_list
 
         # ----------------------------------------------------------------------
