@@ -97,7 +97,7 @@ class GroupDYNCPR(Base):
         # after the initial extraction but before the game starts
         # self.time_start is None
         try:
-            the_time = (datetime.now() - self.time_start).total_seconds()
+            the_time = int((datetime.now() - self.time_start).total_seconds())
         except TypeError:
             the_time = 0
 
