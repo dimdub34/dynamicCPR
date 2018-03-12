@@ -106,7 +106,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :return:
         """
         self.current_extraction = ExtractionsDYNCPR(
-            extraction, (self.time_start - datetime.now()).total_seconds())
+            extraction, int((self.time_start - datetime.now()).total_seconds()))
         self.joueur.info(self.current_extraction)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
