@@ -85,13 +85,15 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         Display the decision screen on the remote
         Get back the decision
+        :param time_start: the time the server starts
         :return:
         """
         logger.debug(u"{} Decision".format(self.joueur))
-        debut = datetime.now()
-        extraction = yield (self.remote.callRemote("display_decision", time_start))
+        self.time_start = time_start
+        extraction = yield (self.remote.callRemote(
+            "display_decision", self.time_start))
         self.currentperiod.DYNCPR_decisiontime = \
-            (datetime.now() - debut).total_seconds()
+            (datetime.now() - self.time_start).total_seconds()
         self.joueur.remove_waitmode()
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
             self.remote_new_extraction(extraction)
@@ -103,7 +105,8 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         :param extraction:
         :return:
         """
-        self.current_extraction = ExtractionsDYNCPR(extraction)
+        self.current_extraction = ExtractionsDYNCPR(
+            extraction, (self.time_start  - datetime.now()).total_seconds())
         self.joueur.info(self.current_extraction)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
         self.currentperiod.extractions.append(self.current_extraction)
@@ -241,14 +244,12 @@ class ExtractionsDYNCPR(Base):
     DYNCPR_extraction_time = Column(DateTime)
     DYNCPR_payoff = Column(Float)
 
-    def __init__(self, extraction):
+    def __init__(self, extraction, the_time):
         self.DYNCPR_extraction = extraction
-        self.DYNCPR_extraction_time = datetime.now()
+        self.DYNCPR_extraction_time = the_time
 
     def __repr__(self):
-        return "extraction: {}".format(
-            self.DYNCPR_extraction, self.DYNCPR_extraction_time.strftime(
-                "%H:%M:%S"))
+        return "extraction: {}".format(self.DYNCPR_extraction)
 
     def to_dict(self):
         return {"extraction": self.DYNCPR_extraction,

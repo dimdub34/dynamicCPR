@@ -161,7 +161,6 @@ class GroupDYNCPR(Base):
         # if continuous it is saved in the update_data method
         # ----------------------------------------------------------------------
         if pms.DYNAMIC_TYPE == pms.DISCRETE:
-            self.previous_extraction = self.current_extraction
             self.current_extraction = GroupExtractionDYNCPR(
                 period, extraction.DYNCPR_extraction_time, group_extrac,
                 self.current_resource)
