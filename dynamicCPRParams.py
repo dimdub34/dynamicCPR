@@ -10,6 +10,7 @@ which means that you should ask to the developer ;-)
 ============================================================================="""
 
 from datetime import timedelta
+import numpy as np
 
 # ------------------------------------------------------------------------------
 # VARIABLES - do not change any value below
@@ -48,7 +49,7 @@ DYNAMIC_TYPE = CONTINUOUS
 # continuous game
 CONTINUOUS_TIME_DURATION = timedelta(seconds=60)  # can be changed in config screen
 # time for the player to take a decision
-DISCRETE_DECISION_TIME = timedelta(seconds=30)
+DISCRETE_DECISION_TIME = timedelta(seconds=10)
 # milliseconds
 TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 
@@ -67,12 +68,29 @@ param_a = 2.5
 param_b = 1.8
 param_c0 = 2
 param_c1 = 0.1
-tau = 0.1
+param_r = 0.05
+param_tau = 0.1
 
 
-def get_infinite_payoff(dyn_type, H):
+def get_infinite_payoff(dyn_type, p, E_p, G_p, R_p):
+    """
+    Compute the payoff of the player if the group extraction stay at its
+    current level at the infinite
+    :param dyn_type: DISCRETE or CONTINUOUS
+    :param p: the current period
+    :param E_p: the current extraction value of the player
+    :param G_p: the current extraction value of the group
+    :param H_p: the current resource stock
+    :return:
+    """
     if dyn_type == DISCRETE:
-        return 2887.505958 + 5.024172262 * H + 0.001545865057 * pow(H, 2)
+        pass  # todo: infinite payoff discrete dynamic_type
+
     elif dyn_type == CONTINUOUS:
-        return 2894.217061 + 5.048322591 * H + 0.01195379425 * pow(H, 2)
+        cste_p = RESOURCE_GROWTH - G_p
+        return (np.exp(-param_r*p) / param_r) * \
+               (param_a*E_p - (param_b/2) * E_p**2 -
+                E_p*(param_c0 - param_c1 * R_p + param_c1 * cste_p * p)) + \
+                E_p * param_c1 * cste_p * \
+               ((1+param_r*p) * np.exp(-param_r*p)/param_r**2)
 
