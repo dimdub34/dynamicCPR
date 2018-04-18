@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# built-in
 import logging
 from collections import OrderedDict
 from twisted.internet import defer
@@ -7,10 +8,13 @@ from datetime import datetime
 from PyQt4.QtCore import QTimer, QObject, pyqtSlot
 from PyQt4.QtGui import QMessageBox
 
+# le2m
 from util import utiltools
 from util.utili18n import le2mtrans
 from util.utiltools import get_module_attributes, timedelta_to_time
+from server.servgui.servguidialogs import DSequence, GuiPayoffs
 
+# dynamicCPR
 import dynamicCPRParams as pms
 from dynamicCPRGui import DConfigure
 from dynamicCPRTexts import trans_DYNCPR
@@ -39,8 +43,7 @@ class Serveur(QObject):
                 utiltools.get_module_info(pms), le2mtrans(u"Parameters"))
         actions["Start"] = lambda _: self.demarrer()
         actions["Payoffs"] = \
-            lambda _: self.le2mserv.gestionnaire_experience.\
-            display_payoffs_onserver("dynamicCPR")
+            lambda _: self.display_payoffs()
         self.le2mserv.gestionnaire_graphique.add_topartmenu(
             u"Dynamic CPR", actions)
 
@@ -204,4 +207,16 @@ class Serveur(QObject):
             g.timer_update.stop()
         yield (self.le2mserv.gestionnaire_experience.run_func(
             self.all, "end_update_data"))
+
+    def display_payoffs(self):
+        sequence_screen = DSequence(self.current_sequence)
+        if sequence_screen.exec_():
+            sequence = sequence_screen.sequence
+            players = self.le2mserv.gestionnaire_joueurs.get_players()
+            payoffs = sorted([(j.hostname, p.DYNCPR_gain_euros) for j in players
+                       for p in j.parties if p.nom == "dynamicCPR" and
+                       p.DYNCPR_sequence == sequence])
+            logger.debug(payoffs)
+            screen_payoffs = GuiPayoffs(self.le2mserv, "dynamicCPR", payoffs)
+            screen_payoffs.exec_()
 

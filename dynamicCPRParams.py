@@ -57,8 +57,8 @@ TIMER_UPDATE = timedelta(seconds=1)  # refresh the group data and the graphs
 # RESOURCE
 # ------------------------------------------------------------------------------
 
-RESOURCE_INITIAL_STOCK = 500
-RESOURCE_GROWTH = 25
+RESOURCE_INITIAL_STOCK = 10
+RESOURCE_GROWTH = 0.56
 
 # ------------------------------------------------------------------------------
 # FONCTION DE GAIN
@@ -72,25 +72,25 @@ param_r = 0.05
 param_tau = 0.1
 
 
-def get_infinite_payoff(dyn_type, p, E_p, G_p, R_p):
+def get_infinite_payoff(p, E_p, G_p, R_p):
     """
     Compute the payoff of the player if the group extraction stay at its
     current level at the infinite
     :param dyn_type: DISCRETE or CONTINUOUS
-    :param p: the current period
+    :param p: the current period or instant t
     :param E_p: the current extraction value of the player
     :param G_p: the current extraction value of the group
     :param H_p: the current resource stock
     :return:
     """
-    if dyn_type == DISCRETE:
+    if DYNAMIC_TYPE == DISCRETE:
         pass  # todo: infinite payoff discrete dynamic_type
 
-    elif dyn_type == CONTINUOUS:
+    elif DYNAMIC_TYPE == CONTINUOUS:
         cste_p = RESOURCE_GROWTH - G_p
-        return (np.exp(-param_r*p) / param_r) * \
+        return np.asscalar((np.exp(-param_r*p) / param_r) * \
                (param_a*E_p - (param_b/2) * E_p**2 -
                 E_p*(param_c0 - param_c1 * R_p + param_c1 * cste_p * p)) + \
                 E_p * param_c1 * cste_p * \
-               ((1+param_r*p) * np.exp(-param_r*p)/param_r**2)
+               ((1+param_r*p) * np.exp(-param_r*p)/param_r**2))
 

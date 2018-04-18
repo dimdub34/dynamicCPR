@@ -29,14 +29,14 @@ class RemoteDYNCPR(IRemote, QObject):
 
     def __init_vars(self):
         self.start_time = None
-        self.extractions_indiv = dict()
-        self.payoffs_indiv = dict()
+        self.extractions_indiv = dict()  # the players + the other group members
         self.extraction_group = PlotData()
         self.resource = PlotData()
+        self.cumulative_payoffs = PlotData()  # player's cumulative payoff (non infinite)
+        self.payoffs = PlotData()  # cumulative payoff + infinite payoff
         self.text_infos = u""
         for j in self.group_members:
             self.extractions_indiv[j] = PlotData()
-            self.payoffs_indiv[j] = PlotData()
         self.decision_screen = None
 
     def remote_configure(self, params, server_part, group_members):
@@ -192,23 +192,38 @@ class RemoteDYNCPR(IRemote, QObject):
             pass
 
         # ----------------------------------------------------------------------
-        # individual extractions et payoffs
+        # group members' extractions
         # ----------------------------------------------------------------------
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].add_x(xdata)
-            self.payoffs_indiv[k].add_x(xdata)
             self.extractions_indiv[k].add_y(v["extraction"])
-            # compute the cumulative payoff
-            if not self.payoffs_indiv[k].ydata:
-                self.payoffs_indiv[k].add_y(v["payoff"])
-            else:
-                self.payoffs_indiv[k].add_y(
-                    self.payoffs_indiv[k].ydata[-1] + v["payoff"])
             try:
                 self.extractions_indiv[k].update_curve()
-                self.payoffs_indiv[k].update_curve()
             except AttributeError:  # if period==0
                 pass
+
+        # ----------------------------------------------------------------------
+        # player's payoff
+        # ----------------------------------------------------------------------
+        player_instant_payoff = group_members_extractions[self.le2mclt.uid]["payoff"]
+        # we keep the cumulative payoff
+        self.cumulative_payoffs.add_x(xdata)
+        if not self.cumulative_payoffs.ydata:
+            self.cumulative_payoffs.add_y(player_instant_payoff)
+        else:
+            self.cumulative_payoffs.add_y(
+                self.cumulative_payoffs.ydata[-1] + player_instant_payoff)
+        # the cumulative payoff + the infinite payoff
+        self.payoffs.add_x(xdata)
+        infinite_payoff = pms.get_infinite_payoff(
+            xdata, group_members_extractions[self.le2mclt.uid]["extraction"],
+            group_extraction, resource_stock)
+        self.payoffs.add_y(
+            self.cumulative_payoffs.ydata[-1] + infinite_payoff)
+        try:
+            self.payoffs.update_curve()
+        except AttributeError:  # if period or instant == 0
+            pass
 
         # ----------------------------------------------------------------------
         # text information
@@ -225,7 +240,7 @@ class RemoteDYNCPR(IRemote, QObject):
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"The available resource") + \
             u": {:.2f}".format(self.resource.ydata[-1]) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Your part payoff") + \
-            u": {:.2f}".format(self.payoffs_indiv[self.le2mclt.uid].ydata[-1])
+            u": {:.2f}".format(self.payoffs.ydata[-1])
         self.text_infos += u"<br>{}<br>{}".format(20*"-", old)
 
         # ----------------------------------------------------------------------
@@ -234,7 +249,7 @@ class RemoteDYNCPR(IRemote, QObject):
         logger.info("{} update group {:.2f} resource {:.2f} payoff: {:.2f}".format(
             self.le2mclt, self.extraction_group.ydata[-1],
             self.resource.ydata[-1],
-            self.payoffs_indiv[self.le2mclt.uid].ydata[-1]))
+            self.payoffs.ydata[-1]))
 
     def remote_end_update_data(self):
         logger.debug("{}: call of remote_end_data".format(self.le2mclt))
@@ -257,10 +272,9 @@ class RemoteDYNCPR(IRemote, QObject):
         if self._le2mclt.simulation:
             logger.info("{} send curves".format(self.le2mclt))
             extrac_indiv = self.extractions_indiv[self.le2mclt.uid]
-            payoffs_indiv = self.payoffs_indiv[self.le2mclt.uid]
             return {
                 "extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata),
-                "payoffs": zip(payoffs_indiv.xdata, payoffs_indiv.ydata)
+                "payoffs": zip(self.payoffs.xdata, self.payoffs.ydata)
             }
         else:
             defered = defer.Deferred()

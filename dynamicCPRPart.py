@@ -25,7 +25,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
 
     DYNCPR_dynamic_type = Column(Integer)
     DYNCPR_trial = Column(Boolean)
-    DYNCPR_current_sequence = Column(Integer)
+    DYNCPR_sequence = Column(Integer)
     DYNCPR_treatment = Column(Integer)
     DYNCPR_group = Column(Integer, default=None)
     DYNCPR_gain_ecus = Column(Float)
@@ -36,7 +36,7 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             nom="dynamicCPR", nom_court="DYNCPR",
             joueur=joueur, le2mserv=le2mserv)
 
-        self.DYNCPR_current_sequence = kwargs.get("current_sequence", 0)
+        self.DYNCPR_sequence = kwargs.get("current_sequence", 0)
         self.DYNCPR_gain_ecus = 0
         self.DYNCPR_gain_euros = 0
 

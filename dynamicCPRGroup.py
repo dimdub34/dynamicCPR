@@ -102,10 +102,25 @@ class GroupDYNCPR(Base):
             the_time = 0
 
         # ----------------------------------------------------------------------
-        # compute and save the group extraction
+        # compute the group extraction
         # ----------------------------------------------------------------------
         group_extrac = sum(
             [e["extraction"] for e in self.current_players_extractions.values()])
+
+        # ----------------------------------------------------------------------
+        # compute the resource
+        # ----------------------------------------------------------------------
+        self.current_resource += pms.RESOURCE_GROWTH
+        if group_extrac > self.current_resource:
+            # todo: think about how to keep track of the old values
+            for v in self.current_players_extractions.values():
+                v["extraction"] = 0
+            group_extrac = 0
+        self.current_resource -= group_extrac
+
+        # ----------------------------------------------------------------------
+        # save the group extraction with the resource stock
+        # ----------------------------------------------------------------------
         self.current_extraction = GroupExtractionDYNCPR(
             self.current_period, the_time, group_extrac, self.current_resource)
         self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
@@ -116,15 +131,7 @@ class GroupDYNCPR(Base):
                 self.current_resource))
 
         # ----------------------------------------------------------------------
-        # compute the resource
-        # ----------------------------------------------------------------------
-        self.current_resource += pms.RESOURCE_GROWTH
-        self.current_resource -= self.current_extraction.DYNCPR_group_extraction
-        if self.current_resource < 0:
-            self.current_resource = 0
-
-        # ----------------------------------------------------------------------
-        # compute individual payoffs
+        # compute individual payoffs (at instant t)
         # ----------------------------------------------------------------------
         for j in self.players:
             try:

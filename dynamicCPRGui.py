@@ -183,7 +183,7 @@ class PlotResource(QWidget):
                 "-k", marker=curve_marker)
 
         self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 2)
-        self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 50))
+        self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 2))
         self.graph.set_ylabel(trans_DYNCPR(u"Units"))
         self.graph.set_title(
             trans_DYNCPR(u"Available resource"))
@@ -192,10 +192,10 @@ class PlotResource(QWidget):
 
 
 class PlotPayoff(QWidget):
-    def __init__(self, payoff_data):
+    def __init__(self, payoffs):
         super(PlotPayoff, self).__init__()
 
-        self.payoff_data = payoff_data
+        self.payoffs = payoffs
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -220,13 +220,13 @@ class PlotPayoff(QWidget):
             self.graph.set_xlabel(trans_DYNCPR(u"Time (seconds)"))
             curve_marker = ""
 
-        if self.payoff_data.curve is None:
-            self.payoff_data.curve, = self.graph.plot(
-                self.payoff_data.xdata, self.payoff_data.ydata,
+        if self.payoffs.curve is None:
+            self.payoffs.curve, = self.graph.plot(
+                self.payoffs.xdata, self.payoffs.ydata,
                 "-k", marker=curve_marker)
 
-        self.graph.set_ylim(0, 50000)
-        self.graph.set_yticks(range(0, 51000, 5000))
+        self.graph.set_ylim(0, 100)
+        self.graph.set_yticks(range(0, 101, 10))
         self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
         self.graph.set_title(trans_DYNCPR(u"Your part payoff"))
         self.graph.grid()
@@ -342,8 +342,7 @@ class GuiDecision(QDialog):
             self.remote.extraction_group)
         self.plot_layout.addWidget(self.plot_extraction, 0, 0)
         # payoff indiv
-        self.plot_payoff = PlotPayoff(
-            self.remote.payoffs_indiv[self.remote.le2mclt.uid])
+        self.plot_payoff = PlotPayoff(self.remote.payoffs)
         self.plot_layout.addWidget(self.plot_payoff, 0, 1)
         # resource
         self.plot_resource = PlotResource(self.remote.resource)
@@ -447,8 +446,7 @@ class GuiSummary(QDialog):
             v.curve = None
         self.remote.extraction_group.curve = None
         self.remote.resource.curve = None
-        for v in self.remote.payoffs_indiv.values():
-            v.curve = None
+        self.remote.payoffs.curve = None
 
         self.plot_layout = QGridLayout()
         layout.addLayout(self.plot_layout)
@@ -458,8 +456,7 @@ class GuiSummary(QDialog):
             self.remote.extraction_group)
         self.plot_layout.addWidget(self.plot_extraction, 0, 0)
         # payoff indiv
-        self.plot_payoff = PlotPayoff(
-            self.remote.payoffs_indiv[self.remote.le2mclt.uid])
+        self.plot_payoff = PlotPayoff(self.remote.payoffs)
         self.plot_layout.addWidget(self.plot_payoff, 0, 1)
         # resource
         self.plot_resource = PlotResource(self.remote.resource)
@@ -501,10 +498,9 @@ class GuiSummary(QDialog):
         # we send back the different individual curves
         # ----------------------------------------------------------------------
         extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
-        payoffs_indiv = self.remote.payoffs_indiv[self.remote.le2mclt.uid]
         data_indiv = {
             "extractions": zip(extract_indiv.xdata, extract_indiv.ydata),
-            "payoffs": zip(payoffs_indiv.xdata, payoffs_indiv.ydata)
+            "payoffs": zip(self.remote.payoffs.xdata, self.remote.payoffs.ydata)
         }
         logger.debug("{} send curves".format(self.remote.le2mclt))
         self.defered.callback(data_indiv)
