@@ -141,7 +141,7 @@ class RemoteDYNCPR(IRemote, QObject):
             defered = defer.Deferred()
             if self.decision_screen is None:
                 self.decision_screen = GuiDecision(self, defered)
-                self.decision_screen.showMaximized()
+                self.decision_screen.showFullScreen()
             else:
                 self.decision_screen.defered = defered
                 self.decision_screen.update_data_and_graphs()
@@ -280,7 +280,7 @@ class RemoteDYNCPR(IRemote, QObject):
             defered = defer.Deferred()
             summary_screen = GuiSummary(
                 self, defered, texts_DYNCPR.get_text_summary(period_content))
-            summary_screen.showMaximized()
+            summary_screen.showFullScreen()
             return defered
 
 
