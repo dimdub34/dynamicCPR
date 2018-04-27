@@ -27,6 +27,8 @@ IMPULSORY = 2  # future
 # used to store the curve (DYNCRP_curve_type)
 EXTRACTION = 0
 PAYOFF = 1
+RESOURCE = 2
+COST = 3
 
 # ------------------------------------------------------------------------------
 # PARAMETERS

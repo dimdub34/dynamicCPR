@@ -31,7 +31,10 @@ class RemoteDYNCPR(IRemote, QObject):
         self.start_time = None
         self.extractions_indiv = dict()  # the players + the other group members
         self.extraction_group = PlotData()
+        self.cost = PlotData()
         self.resource = PlotData()
+        self.payoff_instant = PlotData()
+        self.payoff_part = PlotData()
         self.cumulative_payoffs = PlotData()  # player's cumulative payoff (non infinite)
         self.payoffs = PlotData()  # cumulative payoff + infinite payoff
         self.text_infos = u""
@@ -196,7 +199,7 @@ class RemoteDYNCPR(IRemote, QObject):
         # ----------------------------------------------------------------------
         for k, v in group_members_extractions.items():
             self.extractions_indiv[k].add_x(xdata)
-            self.extractions_indiv[k].add_y(v["extraction"])
+            self.extractions_indiv[k].add_y(v["DYNCPR_extraction"])
             try:
                 self.extractions_indiv[k].update_curve()
             except AttributeError:  # if period==0
@@ -205,7 +208,7 @@ class RemoteDYNCPR(IRemote, QObject):
         # ----------------------------------------------------------------------
         # player's payoff
         # ----------------------------------------------------------------------
-        player_instant_payoff = group_members_extractions[self.le2mclt.uid]["payoff"]
+        player_instant_payoff = group_members_extractions[self.le2mclt.uid]["DYNCPR_payoff"]
         # we keep the cumulative payoff
         self.cumulative_payoffs.add_x(xdata)
         if not self.cumulative_payoffs.ydata:
@@ -216,7 +219,7 @@ class RemoteDYNCPR(IRemote, QObject):
         # the cumulative payoff + the infinite payoff
         self.payoffs.add_x(xdata)
         infinite_payoff = pms.get_infinite_payoff(
-            xdata, group_members_extractions[self.le2mclt.uid]["extraction"],
+            xdata, group_members_extractions[self.le2mclt.uid]["DYNCPR_extraction"],
             group_extraction, resource_stock)
         self.payoffs.add_y(
             self.cumulative_payoffs.ydata[-1] + infinite_payoff)

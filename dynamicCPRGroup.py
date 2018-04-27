@@ -10,6 +10,7 @@ from datetime import datetime
 
 # dynamicCPR
 import dynamicCPRParams as pms
+from dynamicCPRPart import ExtractionsDYNCPR
 
 logger = logging.getLogger("le2m")
 
@@ -105,17 +106,21 @@ class GroupDYNCPR(Base):
         # compute the group extraction
         # ----------------------------------------------------------------------
         group_extrac = sum(
-            [e["extraction"] for e in self.current_players_extractions.values()])
+            [e.DYNCPR_extraction for e in self.current_players_extractions.values()])
 
         # ----------------------------------------------------------------------
         # compute the resource
         # ----------------------------------------------------------------------
         self.current_resource += pms.RESOURCE_GROWTH
         if group_extrac > self.current_resource:
-            # todo: think about how to keep track of the old values
-            for v in self.current_players_extractions.values():
-                v["extraction"] = 0
-            group_extrac = 0
+            for j in self.players_part:
+                j.current_extraction = ExtractionsDYNCPR(0, the_time)
+                self.le2mserv.gestionnaire_base.ajouter(j.current_extraction)
+                j.currentperiod.extractions.append(j.current_extraction)
+                self.current_players_extractions[j.joueur.uid] = \
+                    j.current_extraction
+            group_extrac = sum([e.DYNCPR_extraction for e in
+                                self.current_players_extractions.values()])
         self.current_resource -= group_extrac
 
         # ----------------------------------------------------------------------
@@ -133,22 +138,31 @@ class GroupDYNCPR(Base):
         # ----------------------------------------------------------------------
         # compute individual payoffs (at instant t)
         # ----------------------------------------------------------------------
-        for j in self.players:
+        for j in self.players_part:
             try:
-                j_extrac = self.current_players_extractions[j.uid]["extraction"]
-                j_payoff = pms.param_a * j_extrac - (pms.param_b / 2) * \
-                           pow(j_extrac, 2) - \
-                           (pms.param_c0 - pms.param_c1 * self.current_resource) * j_extrac
-                self.current_players_extractions[j.uid]["payoff"] = j_payoff
+                j_extrac = self.current_extraction.DYNCPR_extraction
+                j.current_extraction.DYNCPR_benefice = \
+                    pms.param_a * j_extrac - (pms.param_b / 2) * \
+                           pow(j_extrac, 2)
+                j.current_extraction.DYNCPR_cost = \
+                    j_extrac * (pms.param_c0 - pms.param_c1 *
+                                     self.current_resource)
+                j.current_extraction.DYNCPR_payoff = \
+                    j.current_extraction.DYNCPR_benefice - \
+                    j.current_extraction.DYNCPR_cost
+                j.current_extraction.DYNCPR_resource = \
+                self.current_resource
             except KeyError:
                 pass  # only for the initial extraction
 
         # ----------------------------------------------------------------------
         # update the remote
         # ----------------------------------------------------------------------
+        cur_player_extrac_dict = {k: v.to_dict() for k, v in
+                                  self.current_players_extractions.items()}
         for j in self.players_part:
             j.remote.callRemote(
-                "update_data", self.current_players_extractions,
+                "update_data", cur_player_extrac_dict,
                 self.current_extraction.DYNCPR_group_extraction,
                 self.current_resource, the_time)
 
@@ -160,21 +174,9 @@ class GroupDYNCPR(Base):
         :param period: the period number
         :return:
         """
-        self.current_players_extractions[player.uid] = extraction.to_dict()
+        self.current_players_extractions[player.uid] = extraction
         group_extrac = sum(
-            [e["extraction"] for e in self.current_players_extractions.values()])
-
-        # ----------------------------------------------------------------------
-        # if discrete save the extraction in the database, and compute
-        # individual payoffs
-        # if continuous it is saved in the update_data method
-        # ----------------------------------------------------------------------
-        # if pms.DYNAMIC_TYPE == pms.DISCRETE:
-        #     self.current_extraction = GroupExtractionDYNCPR(
-        #         period, extraction.DYNCPR_extraction_time, group_extrac,
-        #         self.current_resource)
-        #     self.le2mserv.gestionnaire_base.ajouter(self.current_extraction)
-        #     self.extractions.append(self.current_extraction)
+            [e.DYNCPR_extraction for e in self.current_players_extractions.values()])
 
         self.le2mserv.gestionnaire_graphique.infoserv("G{}: {}".format(
             self.uid_short, group_extrac))
@@ -202,11 +204,7 @@ class GroupExtractionDYNCPR(Base):
         self.DYNCPR_resource_stock = resource
 
     def to_dict(self):
-        return {
-            "period": self.DYNCPR_period,
-            "time": self.DYNCPR_time,
-            "extraction": self.DYNCPR_group_extraction,
-        }
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self):
         return "{}".format(self.DYNCPR_group_extraction)

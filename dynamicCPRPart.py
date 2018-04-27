@@ -162,6 +162,13 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             curve_data = CurveDYNCPR(pms.PAYOFF, x, y)
             self.le2mserv.gestionnaire_base.ajouter(curve_data)
             self.curves.append(curve_data)
+        # we collect the part payoff
+        self.DYNCPR_gain_ecus = payoff_indiv[-1][1]
+        cost = data_indiv["cost"]
+        for x, y in cost:
+            curve_data = CurveDYNCPR(pms.COST, x, y)
+            self.le2mserv.gestionnaire_base.ajouter(curve_data)
+            self.curves.append(curve_data)
         self.joueur.info("Ok")
         self.joueur.remove_waitmode()
 
@@ -180,13 +187,10 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             self.DYNCPR_gain_euros = 0
 
         else:
-            self.currentperiod.DYNCPR_cumulativepayoff = \
-                self.curves[-1].DYNCPR_curve_y
-            self.DYNCPR_gain_ecus = self.currentperiod.DYNCPR_cumulativepayoff
             self.DYNCPR_gain_euros = float(self.DYNCPR_gain_ecus) * \
                                      float(pms.TAUX_CONVERSION)
-            yield (self.remote.callRemote(
-                "set_payoffs", self.DYNCPR_gain_euros, self.DYNCPR_gain_ecus))
+        yield (self.remote.callRemote(
+            "set_payoffs", self.DYNCPR_gain_euros, self.DYNCPR_gain_ecus))
 
         logger.info(u'{} Payoff ecus {} Payoff euros {:.2f}'.format(
             self.joueur, self.DYNCPR_gain_ecus, self.DYNCPR_gain_euros))
@@ -241,6 +245,9 @@ class ExtractionsDYNCPR(Base):
     repetitions_id = Column(Integer, ForeignKey("partie_dynamicCPR_repetitions.id"))
     DYNCPR_extraction = Column(Float)
     DYNCPR_extraction_time = Column(Float)
+    DYNCPR_resource = Column(Float)
+    DYNCPR_benefice = Column(Float)
+    DYNCPR_cost = Column(Float)
     DYNCPR_payoff = Column(Float)
 
     def __init__(self, extraction, the_time):
@@ -251,8 +258,7 @@ class ExtractionsDYNCPR(Base):
         return "extraction: {}".format(self.DYNCPR_extraction)
 
     def to_dict(self):
-        return {"extraction": self.DYNCPR_extraction,
-                "time": self.DYNCPR_extraction_time}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # ==============================================================================
