@@ -152,11 +152,13 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         # ----------------------------------------------------------------------
         data_indiv = yield(self.remote.callRemote(
             "display_summary", self.currentperiod.to_dict()))
+
         extrac_indiv = data_indiv["extractions"]
         for x, y in extrac_indiv:
             curve_data = CurveDYNCPR(pms.EXTRACTION, x, y)
             self.le2mserv.gestionnaire_base.ajouter(curve_data)
             self.curves.append(curve_data)
+
         payoff_indiv = data_indiv["payoffs"]
         for x, y in payoff_indiv:
             curve_data = CurveDYNCPR(pms.PAYOFF, x, y)
@@ -164,11 +166,13 @@ class PartieDYNCPR(Partie, pb.Referenceable):
             self.curves.append(curve_data)
         # we collect the part payoff
         self.DYNCPR_gain_ecus = payoff_indiv[-1][1]
+
         cost = data_indiv["cost"]
         for x, y in cost:
             curve_data = CurveDYNCPR(pms.COST, x, y)
             self.le2mserv.gestionnaire_base.ajouter(curve_data)
             self.curves.append(curve_data)
+
         self.joueur.info("Ok")
         self.joueur.remove_waitmode()
 
@@ -182,13 +186,8 @@ class PartieDYNCPR(Partie, pb.Referenceable):
         """
         logger.debug(u"{} Part Payoff".format(self.joueur))
 
-        if pms.PARTIE_ESSAI:
-            self.DYNCPR_gain_ecus = 0
-            self.DYNCPR_gain_euros = 0
-
-        else:
-            self.DYNCPR_gain_euros = float(self.DYNCPR_gain_ecus) * \
-                                     float(pms.TAUX_CONVERSION)
+        self.DYNCPR_gain_euros = float("{:.2f}".format(
+            self.DYNCPR_gain_ecus * pms.TAUX_CONVERSION))
         yield (self.remote.callRemote(
             "set_payoffs", self.DYNCPR_gain_euros, self.DYNCPR_gain_ecus))
 

@@ -48,8 +48,9 @@ def get_histo_head():
              le2mtrans(u"Period\npayoff"), le2mtrans(u"Cumulative\npayoff")]
 
 
-def get_text_summary(period_content):
-    txt = trans_DYNCPR(u"Summary text")
+def get_text_summary(part_payoff):
+    txt = trans_DYNCPR(u"Your payoff for this part is") + \
+          u" {:.2f} euros".format(part_payoff)
     return txt
 
 

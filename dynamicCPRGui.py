@@ -19,14 +19,13 @@ import random
 from datetime import timedelta
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.pyplot as plt
+from twisted.internet.defer import AlreadyCalledError
+import numpy as np
 
 # le2m
 from util.utili18n import le2mtrans
 from util.utiltools import timedelta_to_time
-from client.cltgui.cltguidialogs import GuiHistorique
-from client.cltgui.cltguitablemodels import TableModelHistorique
-from client.cltgui.cltguiwidgets import (WPeriod, WExplication, WCompterebours,
-                                         WTableview)
+from client.cltgui.cltguiwidgets import (WExplication, WCompterebours)
 
 # dynamicCPR
 import dynamicCPRParams as pms
@@ -71,7 +70,7 @@ class MySlider(QWidget):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(pms.DECISION_MIN)
         self.slider.setMaximum(pms.DECISION_MAX*int(1 / pms.DECISION_STEP))
-        self.slider.setTickInterval(100)
+        self.slider.setTickInterval(10)
         self.slider.setTickPosition(QSlider.TicksAbove)
         self.slider.valueChanged.connect(self.display)
         self.grid_layout.addWidget(self.slider, 2, 0, 1, 3)
@@ -125,7 +124,7 @@ class PlotExtraction(QWidget):
             self.extraction_group.curve, = self.graph.plot(
                 self.extraction_group.xdata, self.extraction_group.ydata,
                 "-k", marker=curve_marker,
-                label=trans_DYNCPR(u"Group extraction"))
+                label=trans_DYNCPR(u"Pair extraction"))
 
         for k, v in self.extractions_indiv.items():
             if k == cltuid:
@@ -134,12 +133,13 @@ class PlotExtraction(QWidget):
                         v.xdata, v.ydata, ls="-", marker=curve_marker,
                         label=trans_DYNCPR(u"Your extraction"))
 
-        self.graph.set_ylim(-5, 25)
-        self.graph.set_yticks(range(0, 2*pms.DECISION_MAX + 1, 5))
-        self.graph.set_ylabel(trans_DYNCPR(u"Units"))
+        self.graph.set_ylim(-0.1, pms.DECISION_MAX+0.1)
+        self.graph.set_yticks(
+            np.arange(0, pms.DECISION_MAX * pms.TAILLE_GROUPES + 0.1, 0.2))
+        self.graph.set_ylabel("")
         self.graph.set_title(trans_DYNCPR(u"Extractions"))
         self.graph.grid()
-        self.graph.legend(loc="lower left", ncol=pms.TAILLE_GROUPES,
+        self.graph.legend(loc="upper left", ncol=pms.TAILLE_GROUPES,
                           fontsize=10)
         self.canvas.draw()
 
@@ -182,11 +182,10 @@ class PlotResource(QWidget):
                 self.resource.xdata, self.resource.ydata,
                 "-k", marker=curve_marker)
 
-        self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 2)
-        self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 2 + 1, 2))
-        self.graph.set_ylabel(trans_DYNCPR(u"Units"))
-        self.graph.set_title(
-            trans_DYNCPR(u"Available resource"))
+        self.graph.set_ylim(0, pms.RESOURCE_INITIAL_STOCK * 3)
+        self.graph.set_yticks(range(0, pms.RESOURCE_INITIAL_STOCK * 3 + 1, 2))
+        self.graph.set_ylabel("")
+        self.graph.set_title(trans_DYNCPR(u"Available resource"))
         self.graph.grid()
         self.canvas.draw()
 
@@ -225,10 +224,10 @@ class PlotPayoff(QWidget):
                 self.payoffs.xdata, self.payoffs.ydata,
                 "-k", marker=curve_marker)
 
-        self.graph.set_ylim(0, 100)
-        self.graph.set_yticks(range(0, 101, 10))
-        self.graph.set_ylabel(trans_DYNCPR(u"ecus"))
-        self.graph.set_title(trans_DYNCPR(u"Your part payoff"))
+        self.graph.set_ylim(0, 600)
+        self.graph.set_yticks(range(0, 601, 50))
+        self.graph.set_ylabel("")
+        self.graph.set_title(trans_DYNCPR(u"Part payoff"))
         self.graph.grid()
         self.canvas.draw()
 
@@ -336,17 +335,21 @@ class GuiDecision(QDialog):
 
         self.plot_layout = QGridLayout()
         layout.addLayout(self.plot_layout)
+
         # extractions (indiv + group)
         self.plot_extraction = PlotExtraction(
             self.remote.le2mclt.uid, self.remote.extractions_indiv,
             self.remote.extraction_group)
         self.plot_layout.addWidget(self.plot_extraction, 0, 0)
+
         # payoff indiv
-        self.plot_payoff = PlotPayoff(self.remote.payoffs)
+        self.plot_payoff = PlotPayoff(self.remote.payoff_part)
         self.plot_layout.addWidget(self.plot_payoff, 0, 1)
+
         # resource
         self.plot_resource = PlotResource(self.remote.resource)
         self.plot_layout.addWidget(self.plot_resource, 1, 0)
+
         # value in text mode
         widget_infos = QWidget()
         widget_infos.setLayout(QVBoxLayout())
@@ -426,7 +429,10 @@ class GuiDecision(QDialog):
         except AttributeError:  # if dynamic == discrete
             pass
         if pms.DYNAMIC_TYPE == pms.CONTINUOUS:
-            self.defered.callback(None)
+            try:
+                self.defered.callback(None)
+            except AlreadyCalledError as m:
+                logger.warning(m.message)
         super(GuiDecision, self).accept()
 
 
@@ -446,26 +452,31 @@ class GuiSummary(QDialog):
             v.curve = None
         self.remote.extraction_group.curve = None
         self.remote.resource.curve = None
-        self.remote.payoffs.curve = None
+        self.remote.payoff_part.curve = None
 
         self.plot_layout = QGridLayout()
         layout.addLayout(self.plot_layout)
+
         # extractions (indiv + group)
         self.plot_extraction = PlotExtraction(
             self.remote.le2mclt.uid, self.remote.extractions_indiv,
             self.remote.extraction_group)
         self.plot_layout.addWidget(self.plot_extraction, 0, 0)
+
         # payoff indiv
-        self.plot_payoff = PlotPayoff(self.remote.payoffs)
+        self.plot_payoff = PlotPayoff(self.remote.payoff_part)
         self.plot_layout.addWidget(self.plot_payoff, 0, 1)
+
         # resource
         self.plot_resource = PlotResource(self.remote.resource)
         self.plot_layout.addWidget(self.plot_resource, 1, 0)
+
         # value in text mode
         widget_infos = QWidget()
         widget_infos.setLayout(QVBoxLayout())
         self.textEdit_infos = QTextEdit()
         self.textEdit_infos.setReadOnly(True)
+        self.textEdit_infos.setText(the_text)
         widget_infos.layout().addWidget(self.textEdit_infos)
         self.plot_layout.addWidget(widget_infos, 1, 1)
         self.plot_layout.setColumnStretch(0, 1)
@@ -500,7 +511,9 @@ class GuiSummary(QDialog):
         extract_indiv = self.remote.extractions_indiv[self.remote.le2mclt.uid]
         data_indiv = {
             "extractions": zip(extract_indiv.xdata, extract_indiv.ydata),
-            "payoffs": zip(self.remote.payoffs.xdata, self.remote.payoffs.ydata)
+            "payoffs": zip(self.remote.payoff_part.xdata,
+                           self.remote.payoff_part.ydata),
+            "cost": zip(self.remote.cost.xdata, self.remote.cost.ydata)
         }
         logger.debug("{} send curves".format(self.remote.le2mclt))
         self.defered.callback(data_indiv)

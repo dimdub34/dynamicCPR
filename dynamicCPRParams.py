@@ -35,14 +35,14 @@ COST = 3
 # ------------------------------------------------------------------------------
 
 TREATMENT = BASELINE  # for future treatments
-TAUX_CONVERSION = 1
-NOMBRE_PERIODES = 2  # only for dynamic == discrete
+TAUX_CONVERSION = 0.05
+NOMBRE_PERIODES = 1  # only for dynamic == discrete
 TAILLE_GROUPES = 2  # should not be changed without asking Dimitri
 MONNAIE = u"ecu"
 
 # DECISION
 DECISION_MIN = 0
-DECISION_MAX = 20
+DECISION_MAX = 1.4
 DECISION_STEP = 0.01
 
 PARTIE_ESSAI = False

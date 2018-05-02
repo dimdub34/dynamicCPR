@@ -7,83 +7,72 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-18 17:17+0200\n"
-"PO-Revision-Date: 2018-04-18 17:20+0200\n"
+"POT-Creation-Date: 2018-05-02 16:08+0200\n"
+"PO-Revision-Date: 2018-05-02 16:10+0200\n"
+"Last-Translator: Dimitri DUBOIS <dimitri.dubois@umontpellier.fr>\n"
+"Language-Team: \n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Dimitri DUBOIS <dimitri.dubois@umontpellier.fr>\n"
-"Language-Team: \n"
 "X-Generator: Poedit 1.8.7.1\n"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:111
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:110
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:168
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:211
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:210
 msgid "Periods"
 msgstr "Périodes"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:120
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:119
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:177
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:220
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:219
 msgid "Time (seconds)"
 msgstr "Temps (secondes)"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:128
-msgid "Group extraction"
-msgstr "Extraction du groupe"
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:127
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:242
+msgid "Pair extraction"
+msgstr "Extraction de la paire"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:135
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:236
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:134
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:240
 msgid "Your extraction"
 msgstr "Votre extraction"
-
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:139
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:187
-msgid "Units"
-msgstr "Unités"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:140
 msgid "Extractions"
 msgstr "Extractions"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:189
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:188
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:244
 msgid "Available resource"
 msgstr "Ressource disponible"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:230
-msgid "ecus"
-msgstr "ecus"
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:248
+msgid "Part payoff"
+msgstr "Gain de la partie"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:231
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:242
-msgid "Your part payoff"
-msgstr "Votre gain pour la partie"
-
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:282
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:281
 msgid "Do you confirm your choice?"
 msgstr "Vous confirmez votre choix?"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:375
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:378
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRServ.py:157
 msgid "Decision"
 msgstr "Décision"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:232
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:236
 msgid "Instant"
 msgstr "Instant"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:234
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:238
 msgid "Period"
 msgstr "Période"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:238
-msgid "The group extraction"
-msgstr "L'extraction du groupe"
-
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:240
-msgid "The available resource"
-msgstr "La ressource disponible"
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:246
+msgid "Instant payoff"
+msgstr "Gain de l'instant"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRServ.py:126
 msgid "Initial extraction"
@@ -98,5 +87,26 @@ msgid "Please choose an extraction level"
 msgstr "Merci de choisir un niveau d'extraction"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRTexts.py:52
-msgid "Summary text"
-msgstr "Texte récapitulatif"
+msgid "Your payoff for this part is"
+msgstr "Votre gain pour cette partie est de"
+
+#~ msgid "Group extraction"
+#~ msgstr "Extraction du groupe"
+
+#~ msgid "Units"
+#~ msgstr "Unités"
+
+#~ msgid "ecus"
+#~ msgstr "ecus"
+
+#~ msgid "Your part payoff"
+#~ msgstr "Votre gain pour la partie"
+
+#~ msgid "The group extraction"
+#~ msgstr "L'extraction du groupe"
+
+#~ msgid "The available resource"
+#~ msgstr "La ressource disponible"
+
+#~ msgid "Summary text"
+#~ msgstr "Texte récapitulatif"

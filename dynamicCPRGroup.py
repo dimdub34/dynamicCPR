@@ -139,32 +139,28 @@ class GroupDYNCPR(Base):
         # compute individual payoffs (at instant t)
         # ----------------------------------------------------------------------
         for j in self.players_part:
-            try:
-                j_extrac = self.current_extraction.DYNCPR_extraction
-                j.current_extraction.DYNCPR_benefice = \
-                    pms.param_a * j_extrac - (pms.param_b / 2) * \
-                           pow(j_extrac, 2)
-                j.current_extraction.DYNCPR_cost = \
-                    j_extrac * (pms.param_c0 - pms.param_c1 *
-                                     self.current_resource)
-                j.current_extraction.DYNCPR_payoff = \
-                    j.current_extraction.DYNCPR_benefice - \
-                    j.current_extraction.DYNCPR_cost
-                j.current_extraction.DYNCPR_resource = \
-                self.current_resource
-            except KeyError:
-                pass  # only for the initial extraction
+            j_extrac = j.current_extraction.DYNCPR_extraction
+            j.current_extraction.DYNCPR_benefice = \
+                pms.param_a * j_extrac - (pms.param_b / 2) * \
+                pow(j_extrac, 2)
+            j.current_extraction.DYNCPR_cost = \
+                j_extrac * (pms.param_c0 - pms.param_c1 *
+                            self.current_resource)
+            j.current_extraction.DYNCPR_payoff = \
+                j.current_extraction.DYNCPR_benefice - \
+                j.current_extraction.DYNCPR_cost
+            j.current_extraction.DYNCPR_resource = self.current_resource
 
         # ----------------------------------------------------------------------
         # update the remote
         # ----------------------------------------------------------------------
         cur_player_extrac_dict = {k: v.to_dict() for k, v in
                                   self.current_players_extractions.items()}
+
         for j in self.players_part:
             j.remote.callRemote(
                 "update_data", cur_player_extrac_dict,
-                self.current_extraction.DYNCPR_group_extraction,
-                self.current_resource, the_time)
+                self.current_extraction.to_dict(), the_time)
 
     def add_extraction(self, player, extraction):
         """
