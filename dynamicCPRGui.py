@@ -588,6 +588,19 @@ class DConfigure(QDialog):
                     self.timeEdit_continuous_duration)
 
         # ----------------------------------------------------------------------
+        # discrete time decision
+        # ----------------------------------------------------------------------
+        self.timeEdit_discrete_duration = QTimeEdit()
+        self.timeEdit_discrete_duration.setDisplayFormat("hh:mm:ss")
+        time_duration = timedelta_to_time(pms.DISCRETE_DECISION_TIME)
+        self.timeEdit_discrete_duration.setTime(
+            QTime(time_duration.hour, time_duration.minute,
+                  time_duration.second))
+        self.timeEdit_discrete_duration.setMaximumWidth(100)
+        form.addRow(QLabel(u"Discrete decision time"),
+                    self.timeEdit_discrete_duration)
+
+        # ----------------------------------------------------------------------
         # buttons
         # ----------------------------------------------------------------------
         button = QDialogButtonBox(
@@ -609,6 +622,10 @@ class DConfigure(QDialog):
         pms.CONTINUOUS_TIME_DURATION = timedelta(
             hours=time_continuous.hour, minutes=time_continuous.minute,
             seconds=time_continuous.second)
+        time_discrete = self.timeEdit_discrete_duration.time().toPyTime()
+        pms.DISCRETE_DECISION_TIME = timedelta(
+            hours=time_discrete.hour, minutes=time_discrete.minute,
+            seconds=time_discrete.second)
         self.accept()
 
 
