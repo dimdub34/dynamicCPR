@@ -36,13 +36,13 @@ class Serveur(QObject):
 
         # __ MENU __
         actions = OrderedDict()
-        actions["Configure"] = self._configure
-        actions["Parameters"] = \
+        actions[le2mtrans("Configure")] = self._configure
+        actions[le2mtrans("Parameters")] = \
             lambda _: self.le2mserv.gestionnaire_graphique. \
             display_information2(
                 utiltools.get_module_info(pms), le2mtrans(u"Parameters"))
-        actions["Start"] = lambda _: self.demarrer()
-        actions["Payoffs"] = \
+        actions[le2mtrans("Start")] = lambda _: self.demarrer()
+        actions[le2mtrans("Display payoffs")] = \
             lambda _: self.display_payoffs()
         self.le2mserv.gestionnaire_graphique.add_topartmenu(
             u"Dynamic CPR", actions)
