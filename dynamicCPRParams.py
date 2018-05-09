@@ -74,6 +74,14 @@ param_r = 0.05
 param_tau = 0.1
 
 
+def get_cumulative_payoff(p, extractions):
+    if DYNAMIC_TYPE == DISCRETE:
+        return sum([pow(1 - param_r * param_tau, p) * i for i in extractions])
+
+    elif DYNAMIC_TYPE == CONTINUOUS:
+        return sum([i * np.exp(- param_r * p) for i in extractions])
+
+
 def get_infinite_payoff(p, E_p, G_p, R_p):
     """
     Compute the payoff of the player if the group extraction stay at its

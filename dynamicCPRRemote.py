@@ -216,7 +216,8 @@ class RemoteDYNCPR(IRemote, QObject):
         self.payoff_instant.add_x(xdata)
         self.payoff_instant.add_y(group_members_extractions[self.le2mclt.uid]
                                   ["DYNCPR_payoff"])
-        cumulative_payoff = sum(self.payoff_instant.ydata)
+        cumulative_payoff = pms.get_cumulative_payoff(
+            xdata, self.payoff_instant.ydata)
         infinite_payoff = pms.get_infinite_payoff(
             xdata,
             group_members_extractions[self.le2mclt.uid]["DYNCPR_extraction"],

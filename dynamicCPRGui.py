@@ -127,11 +127,12 @@ class PlotExtraction(QWidget):
                 label=trans_DYNCPR(u"Pair extraction"))
 
         for k, v in self.extractions_indiv.items():
-            if k == cltuid:
-                if v.curve is None:
-                    v.curve, = self.graph.plot(
-                        v.xdata, v.ydata, ls="-", marker=curve_marker,
-                        label=trans_DYNCPR(u"Your extraction"))
+            lab = trans_DYNCPR(u"Your extraction") if k == cltuid else \
+                trans_DYNCPR(u"Other player's extraction")
+            if v.curve is None:
+                v.curve, = self.graph.plot(
+                    v.xdata, v.ydata, ls="-", marker=curve_marker,
+                    label=lab)
 
         self.graph.set_ylim(-0.1, pms.DECISION_MAX+0.1)
         self.graph.set_yticks(
