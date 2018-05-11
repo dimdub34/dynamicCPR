@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-07 09:38+0200\n"
-"PO-Revision-Date: 2018-05-07 09:38+0200\n"
+"POT-Creation-Date: 2018-05-11 11:29+0200\n"
+"PO-Revision-Date: 2018-05-11 11:35+0200\n"
 "Last-Translator: Dimitri DUBOIS <dimitri.dubois@umontpellier.fr>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -18,61 +18,69 @@ msgstr ""
 "X-Generator: Poedit 1.8.7.1\n"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:110
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:168
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:210
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:170
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:212
 msgid "Periods"
 msgstr "Périodes"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:119
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:177
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:219
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:179
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:221
 msgid "Time (seconds)"
 msgstr "Temps (secondes)"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:127
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:242
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:243
 msgid "Pair extraction"
 msgstr "Extraction de la paire"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:134
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:240
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:130
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:241
 msgid "Your extraction"
 msgstr "Votre extraction"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:140
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:131
+msgid "Other player's extraction"
+msgstr "Extraction de l'autre joueur"
+
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:142
 msgid "Extractions"
 msgstr "Extractions"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:188
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:244
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:190
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:245
 msgid "Available resource"
 msgstr "Ressource disponible"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:230
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:248
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:232
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:251
 msgid "Part payoff"
 msgstr "Gain de la partie"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:281
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:283
 msgid "Do you confirm your choice?"
 msgstr "Vous confirmez votre choix?"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:378
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:380
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRServ.py:157
 msgid "Decision"
 msgstr "Décision"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:236
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:237
 msgid "Instant"
 msgstr "Instant"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:238
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:239
 msgid "Period"
 msgstr "Période"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:246
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:247
 msgid "Instant payoff"
 msgstr "Gain de l'instant"
+
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:249
+msgid "Cumulative payoff"
+msgstr "Gain cumulé"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRServ.py:126
 msgid "Initial extraction"
@@ -87,8 +95,11 @@ msgid "Please choose an extraction level"
 msgstr "Merci de choisir un niveau d'extraction"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRTexts.py:52
-msgid "Your payoff for this part is"
-msgstr "Votre gain pour cette partie est de"
+msgid "Your payoff for this part is "
+msgstr "Votre gain pour la partie est "
+
+#~ msgid "Your payoff for this part is"
+#~ msgstr "Votre gain pour cette partie est de"
 
 #~ msgid "Group extraction"
 #~ msgstr "Extraction du groupe"

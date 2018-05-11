@@ -123,15 +123,16 @@ class PlotExtraction(QWidget):
         if self.extraction_group.curve is None:
             self.extraction_group.curve, = self.graph.plot(
                 self.extraction_group.xdata, self.extraction_group.ydata,
-                "-k", marker=curve_marker,
+                "-k", marker=curve_marker, color="black",
                 label=trans_DYNCPR(u"Pair extraction"))
 
         for k, v in self.extractions_indiv.items():
             lab = trans_DYNCPR(u"Your extraction") if k == cltuid else \
                 trans_DYNCPR(u"Other player's extraction")
+            col = "green" if k == cltuid else "blue"
             if v.curve is None:
                 v.curve, = self.graph.plot(
-                    v.xdata, v.ydata, ls="-", marker=curve_marker,
+                    v.xdata, v.ydata, ls="-", marker=curve_marker, color=col,
                     label=lab)
 
         self.graph.set_ylim(-0.1, pms.DECISION_MAX+0.1)
