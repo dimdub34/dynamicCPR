@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-11 11:29+0200\n"
-"PO-Revision-Date: 2018-05-11 11:35+0200\n"
+"POT-Creation-Date: 2018-05-21 18:14+0200\n"
+"PO-Revision-Date: 2018-05-21 18:15+0200\n"
 "Last-Translator: Dimitri DUBOIS <dimitri.dubois@umontpellier.fr>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -30,12 +30,12 @@ msgid "Time (seconds)"
 msgstr "Temps (secondes)"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:127
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:243
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:248
 msgid "Pair extraction"
 msgstr "Extraction de la paire"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:130
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:241
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:246
 msgid "Your extraction"
 msgstr "Votre extraction"
 
@@ -48,12 +48,12 @@ msgid "Extractions"
 msgstr "Extractions"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:190
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:245
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:250
 msgid "Available resource"
 msgstr "Ressource disponible"
 
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRGui.py:232
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:251
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:258
 msgid "Part payoff"
 msgstr "Gain de la partie"
 
@@ -66,19 +66,23 @@ msgstr "Vous confirmez votre choix?"
 msgid "Decision"
 msgstr "Décision"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:237
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:242
 msgid "Instant"
 msgstr "Instant"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:239
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:244
 msgid "Period"
 msgstr "Période"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:247
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:252
 msgid "Instant payoff"
 msgstr "Gain de l'instant"
 
-#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:249
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:254
+msgid "Discounted payoff"
+msgstr "Gain de l'instant actualisé"
+
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRRemote.py:256
 msgid "Cumulative payoff"
 msgstr "Gain cumulé"
 
