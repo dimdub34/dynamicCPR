@@ -514,7 +514,7 @@ class GuiSummary(QDialog):
         data_indiv = {
             "extractions": zip(extract_indiv.xdata, extract_indiv.ydata),
             "payoffs": zip(self.remote.payoff_part.xdata,
-                           self.remote.payoff_part.ydata),
+                           np.array(self.remote.payoff_part.ydata).tolist()),
             "cost": zip(self.remote.cost.xdata, self.remote.cost.ydata)
         }
         logger.debug("{} send curves".format(self.remote.le2mclt))
