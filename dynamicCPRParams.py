@@ -74,68 +74,70 @@ param_r = 0.05
 param_tau = 0.1
 
 
-def get_cumulative_payoff(p, extractions):
-    if DYNAMIC_TYPE == DISCRETE:
-        return sum([pow(1 - param_r * param_tau, i) * extractions[i]
-                    for i in range(p)])
+def get_infinite_payoff(t, resource, extraction, extraction_group):
+    calcul = 0
 
-    elif DYNAMIC_TYPE == CONTINUOUS:
-        return np.asscalar(
-            sum([np.exp(- param_r * i) * extractions[i] for i in range(p)]))
+    if DYNAMIC_TYPE == CONTINUOUS:
+        constante = RESOURCE_GROWTH - extraction
+        try:
+            tm = ((param_c0 / param_c1) + constante * t - resource) / constante
+            t0 = (constante * t - resource) / constante
+        except ZeroDivisionError:
+            pass
 
+        if resource >= (param_c0 / param_c1):
 
-def get_infinite_payoff(p, E_p, G_p, R_p):
-    """
-    Compute the payoff of the player if the group extraction stay at its
-    current level at the infinite
-    :param dyn_type: DISCRETE or CONTINUOUS
-    :param p: the current period or instant t
-    :param E_p: the current extraction value of the player
-    :param G_p: the current extraction value of the group
-    :param R_p: the current resource stock
-    :return:
-    """
+            if constante >= 0:  # cas 1.1
+                calcul = (param_a * extraction - (param_b / 2) * pow(extraction,
+                                                                     2)) * \
+                         (np.exp(- param_r * t) / param_r)
 
-    if DYNAMIC_TYPE == DISCRETE:
-        cste_dis = 1 / param_tau * (RESOURCE_GROWTH - G_p)
-        return (
-            param_tau *
-            (
-                    param_a * E_p - (param_b/2) * pow(E_p, 2) -
-                    E_p * (param_c0 - param_c1 * R_p)
-            )
-            *
-            (
-                    pow(1-param_r*param_tau, p+1) / (param_r * param_tau)
-            )
-            +
-            param_tau * E_p * param_c1 * cste_dis
-            *
-            (
-                    (
-                            pow(1 - param_r*param_tau, p+1) *
-                            (p * param_r*param_tau + 1)
-                    )
-                    /
-                    pow(param_r * param_tau, 2)
-            )
-        )
+            else:  # cas 1.2
+                calcul = (param_a * extraction - (param_b / 2) * pow(extraction,
+                                                                     2)) * \
+                         ((np.exp(- param_r * t) - np.exp(
+                             - param_r * t0)) / param_r) - \
+                         extraction * (
+                                     param_c0 - param_c1 * resource + constante * param_c1 * t) * \
+                         ((np.exp(- param_r * tm) - np.exp(
+                             - param_r * t0)) / param_r) + \
+                         (extraction * param_c1 * constante) * \
+                         ((1 + param_r * tm) * np.exp(-param_r * tm) - (
+                                     1 + param_r * t0) * np.exp(
+                             -param_r * t0)) / pow(param_r, 2)
 
-    elif DYNAMIC_TYPE == CONTINUOUS:
-        cste_p = RESOURCE_GROWTH - G_p
-        return np.asscalar(
-            (
-                    np.exp(-param_r*p) / param_r
-            )
-            *
-            (
-                    param_a*E_p - (param_b/2) * E_p**2 -
-                    E_p*(param_c0 - param_c1 * R_p + param_c1 * cste_p * p)
-            )
-            +
-            E_p * param_c1 * cste_p *
-            (
-                    (1+param_r*p) * np.exp(-param_r*p)/param_r**2
-            )
-        )
+        else:
+
+            if constante > 0:  # cas 1.3
+                calcul = (param_a * extraction - (param_b / 2) * pow(extraction,
+                                                                     2)) * \
+                         (np.exp(- param_r * t) / param_r) - \
+                         extraction * (
+                                     param_c0 - param_c1 * resource + constante * param_c1 * t) * \
+                         ((np.exp(- param_r * t) - np.exp(
+                             - param_r * tm)) / param_r) + \
+                         (extraction * param_c1 * constante) * \
+                         ((1 + param_r * t) * np.exp(-param_r * t) - (
+                                     1 + param_r * tm) * np.exp(
+                             -param_r * tm)) / pow(param_r, 2)
+
+            elif constante < 0:  # cas 1.4
+                calcul = (param_a * extraction - (param_b / 2) * pow(extraction,
+                                                                     2) -
+                          extraction * (
+                                      param_c0 - param_c1 * resource + constante * param_c1 * t)) * \
+                         ((np.exp(- param_r * t) - np.exp(
+                             - param_r * t0)) / param_r) + \
+                         (extraction * param_c1 * constante) * \
+                         ((1 + param_r * t) * np.exp(-param_r * t) - (
+                                     1 + param_r * t0) * np.exp(
+                             -param_r * t0)) / pow(param_r, 2)
+
+            else:  # cas 1.5
+                calcul = (param_a * extraction - (param_b / 2) * pow(extraction,
+                                                                     2) -
+                          extraction * (param_c0 - param_c1 * resource)) * \
+                         (np.exp(- param_r * t) / param_r)
+
+    return calcul
 
