@@ -109,9 +109,8 @@ class GroupDYNCPR(Base):
             [e.DYNCPR_extraction for e in self.current_players_extractions.values()])
 
         # ----------------------------------------------------------------------
-        # compute the resource
+        # check extractions
         # ----------------------------------------------------------------------
-        self.current_resource += pms.RESOURCE_GROWTH
         if group_extrac > self.current_resource:
             for j in self.players_part:
                 j.current_extraction = ExtractionsDYNCPR(0, the_time)
@@ -121,7 +120,30 @@ class GroupDYNCPR(Base):
                     j.current_extraction
             group_extrac = sum([e.DYNCPR_extraction for e in
                                 self.current_players_extractions.values()])
+
+        # ----------------------------------------------------------------------
+        # compute individual payoffs (at instant t)
+        # ----------------------------------------------------------------------
+        for j in self.players_part:
+            j_extrac = j.current_extraction.DYNCPR_extraction
+            j.current_extraction.DYNCPR_benefice = \
+                pms.param_a * j_extrac - (pms.param_b / 2) * \
+                pow(j_extrac, 2)
+            cost = j_extrac * (pms.param_c0 - pms.param_c1 * self.current_resource)
+            if cost < 0 :
+                cost = 0
+            j.current_extraction.DYNCPR_cost = cost
+            j.current_extraction.DYNCPR_payoff = \
+                j.current_extraction.DYNCPR_benefice - \
+                j.current_extraction.DYNCPR_cost
+
+        # ----------------------------------------------------------------------
+        # compute the new available resource
+        # ----------------------------------------------------------------------
+        self.current_resource += pms.RESOURCE_GROWTH
         self.current_resource -= group_extrac
+        for j in self.players_part:
+            j.current_extraction.DYNCPR_resource = self.current_resource
 
         # ----------------------------------------------------------------------
         # save the group extraction with the resource stock
@@ -134,22 +156,6 @@ class GroupDYNCPR(Base):
             "{} update_data extraction {:.2f} - resource {:.2f}".format(
                 self, self.current_extraction.DYNCPR_group_extraction,
                 self.current_resource))
-
-        # ----------------------------------------------------------------------
-        # compute individual payoffs (at instant t)
-        # ----------------------------------------------------------------------
-        for j in self.players_part:
-            j_extrac = j.current_extraction.DYNCPR_extraction
-            j.current_extraction.DYNCPR_benefice = \
-                pms.param_a * j_extrac - (pms.param_b / 2) * \
-                pow(j_extrac, 2)
-            j.current_extraction.DYNCPR_cost = \
-                j_extrac * (pms.param_c0 - pms.param_c1 *
-                            self.current_resource)
-            j.current_extraction.DYNCPR_payoff = \
-                j.current_extraction.DYNCPR_benefice - \
-                j.current_extraction.DYNCPR_cost
-            j.current_extraction.DYNCPR_resource = self.current_resource
 
         # ----------------------------------------------------------------------
         # update the remote
