@@ -78,7 +78,7 @@ def get_infinite_payoff(t, resource, extraction, extraction_group):
     calcul = 0
 
     if DYNAMIC_TYPE == CONTINUOUS:
-        constante = RESOURCE_GROWTH - extraction
+        constante = RESOURCE_GROWTH - extraction_group
         try:
             tm = ((param_c0 / param_c1) + constante * t - resource) / constante
             t0 = (constante * t - resource) / constante
