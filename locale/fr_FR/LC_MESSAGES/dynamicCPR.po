@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-21 18:14+0200\n"
-"PO-Revision-Date: 2018-05-21 18:15+0200\n"
+"POT-Creation-Date: 2018-05-25 12:35+0200\n"
+"PO-Revision-Date: 2018-05-25 12:35+0200\n"
 "Last-Translator: Dimitri DUBOIS <dimitri.dubois@umontpellier.fr>\n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -101,6 +101,10 @@ msgstr "Merci de choisir un niveau d'extraction"
 #: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRTexts.py:52
 msgid "Your payoff for this part is "
 msgstr "Votre gain pour la partie est "
+
+#: /home/dimitri/Documents/travail/programmes/le2m-v2.1/le2m/parts/dynamicCPR/dynamicCPRTexts.py:54
+msgid "which corresponds to "
+msgstr "soit "
 
 #~ msgid "Your payoff for this part is"
 #~ msgstr "Votre gain pour cette partie est de"

@@ -50,7 +50,9 @@ def get_histo_head():
 
 def get_text_summary(part_payoff):
     txt = trans_DYNCPR(u"Your payoff for this part is ") + \
-          u" {:.2f} euros".format(part_payoff)
+          u" {:.2f} ecus, ".format(part_payoff) + \
+          trans_DYNCPR(u"which corresponds to ") + \
+          u"{:.2f} euros".format(part_payoff * pms.TAUX_CONVERSION)
     return txt
 
 
