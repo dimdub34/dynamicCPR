@@ -252,7 +252,7 @@ class RemoteDYNCPR(IRemote, QObject):
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Instant payoff") + \
             u": {:.2f}".format(self.payoff_instant.ydata[-1]) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Discounted payoff") + \
-            u": {:.10f}".format(self.payoff_instant_discounted.ydata[-1]) + \
+            u": {:.4f}".format(self.payoff_instant_discounted.ydata[-1]) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Cumulative payoff") + \
             u": {:.2f}".format(cumulative_payoff) + \
             u"<br>" + texts_DYNCPR.trans_DYNCPR(u"Part payoff") + \
