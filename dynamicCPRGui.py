@@ -141,8 +141,8 @@ class PlotExtraction(QWidget):
         self.graph.set_ylabel("")
         self.graph.set_title(trans_DYNCPR(u"Extractions"))
         self.graph.grid()
-        self.graph.legend(loc="upper left", ncol=pms.TAILLE_GROUPES,
-                          fontsize=10)
+        self.graph.legend(loc="upper left", ncol=pms.TAILLE_GROUPES+1,
+                          fontsize=9)
         self.canvas.draw()
 
 
