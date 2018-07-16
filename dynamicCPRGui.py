@@ -137,7 +137,7 @@ class PlotExtraction(QWidget):
 
         self.graph.set_ylim(-0.1, pms.DECISION_MAX+0.1)
         self.graph.set_yticks(
-            np.arange(0, pms.DECISION_MAX * pms.TAILLE_GROUPES + 0.1, 0.2))
+            np.arange(0, pms.DECISION_MAX * pms.TAILLE_GROUPES + 0.1, 0.4))
         self.graph.set_ylabel("")
         self.graph.set_title(trans_DYNCPR(u"Extractions"))
         self.graph.grid()
