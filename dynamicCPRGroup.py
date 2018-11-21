@@ -50,10 +50,10 @@ class GroupDYNCPR(Base):
         self.current_extraction = None
         self.current_resource = pms.RESOURCE_INITIAL_STOCK
         self.time_start = None
-        self.timer_update = QTimer()
-        self.timer_update.setInterval(
-            int(pms.TIMER_UPDATE.total_seconds())*1000)
-        self.timer_update.timeout.connect(self.update_data)
+        # self.timer_update = QTimer()
+        # self.timer_update.setInterval(
+        #     int(pms.TIMER_UPDATE.total_seconds())*1000)
+        # self.timer_update.timeout.connect(self.update_data)
 
     # --------------------------------------------------------------------------
     # PROPERTIES
