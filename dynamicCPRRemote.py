@@ -297,7 +297,7 @@ class RemoteDYNCPR(IRemote, QObject):
             defered = defer.Deferred()
             summary_screen = GuiSummary(
                 self, defered, texts_DYNCPR.get_text_summary(
-                    float(self.payoff_part.ydata[-1])))
+                    self.payoff_part.ydata[-1]))
             summary_screen.showFullScreen()
             return defered
 
@@ -317,7 +317,7 @@ class PlotData():
         self.xdata.append(val)
 
     def add_y(self, val):
-        self.ydata.append(val)
+        self.ydata.append(float(val))
 
     def update_curve(self):
         self.curve.set_data(self.xdata, self.ydata)
