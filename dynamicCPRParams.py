@@ -49,7 +49,7 @@ PARTIE_ESSAI = False
 
 DYNAMIC_TYPE = CONTINUOUS
 # continuous game
-CONTINUOUS_TIME_DURATION = timedelta(seconds=60)  # can be changed in config screen
+CONTINUOUS_TIME_DURATION = timedelta(seconds=30)  # can be changed in config screen
 # time for the player to take a decision
 DISCRETE_DECISION_TIME = timedelta(seconds=10)
 # milliseconds
@@ -83,7 +83,8 @@ def get_infinite_payoff(t, resource, extraction, extraction_group):
             tm = ((param_c0 / param_c1) + constante * t - resource) / constante
             t0 = (constante * t - resource) / constante
         except ZeroDivisionError:
-            pass
+            # quand la constante est égale à 0 tm et t0 ne sont jamais utilisés
+            tm, t0 = 0, 0
 
         if resource >= (param_c0 / param_c1):
 
