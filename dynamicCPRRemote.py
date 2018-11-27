@@ -285,13 +285,14 @@ class RemoteDYNCPR(IRemote, QObject):
         logger.info(u"{} Summary".format(self._le2mclt.uid))
         # self.histo.append([period_content.get(k) for k in self.histo_vars])
         if self._le2mclt.simulation:
-            logger.info("{} send curves".format(self.le2mclt))
-            extrac_indiv = self.extractions_indiv[self.le2mclt.uid]
-            return {
-                "extractions": zip(extrac_indiv.xdata, extrac_indiv.ydata),
-                "payoffs": zip(self.payoff_part.xdata, self.payoff_part.ydata),
-                "cost": zip(self.remote.cost.xdata, self.remote.cost.ydata)
+            data_indiv = {
+                "extractions": self.extractions_indiv[self.le2mclt.uid].get_curve(),
+                "payoffs": self.payoff_part.get_curve(),
+                "cost": self.cost.get_curve()
             }
+            logger.info("{} send curves ({})".format(
+                self.le2mclt, data_indiv.keys()))
+            return data_indiv
         else:
             defered = defer.Deferred()
             summary_screen = GuiSummary(
@@ -321,4 +322,5 @@ class PlotData():
     def update_curve(self):
         self.curve.set_data(self.xdata, self.ydata)
 
-
+    def get_curve(self):
+        return zip(self.xdata, self.ydata)
