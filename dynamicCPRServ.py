@@ -214,10 +214,13 @@ class Serveur(QObject):
         yield (self.le2mserv.gestionnaire_experience.run_func(
             self.all, "end_update_data"))
 
+    @defer.inlineCallbacks
     @pyqtSlot()
     def slot_update_data(self):
-        for g in self.groups:
-            g.update_data()
+        yield (self.le2mserv.gestionnaire_experience.run_func(
+            self.groups, "update_data"))
+        # for g in self.groups:
+        #     g.update_data()
 
     def display_payoffs(self):
         sequence_screen = DSequence(self.current_sequence)
