@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, Boolean
 import logging
 from PyQt4.QtCore import QTimer
+from twisted.internet import defer
 from datetime import datetime
 
 # dynamicCPR
@@ -94,6 +95,7 @@ class GroupDYNCPR(Base):
     # METHODS
     # --------------------------------------------------------------------------
 
+    @defer.inlineCallbacks
     def update_data(self):
         # after the initial extraction but before the game starts
         # self.time_start is None
@@ -164,9 +166,9 @@ class GroupDYNCPR(Base):
                                   self.current_players_extractions.items()}
 
         for j in self.players_part:
-            j.remote.callRemote(
+            yield (j.remote.callRemote(
                 "update_data", cur_player_extrac_dict,
-                self.current_extraction.to_dict(), the_time)
+                self.current_extraction.to_dict(), the_time))
 
     def add_extraction(self, player, extraction):
         """
