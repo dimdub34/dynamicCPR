@@ -517,7 +517,8 @@ class GuiSummary(QDialog):
                            np.array(self.remote.payoff_part.ydata).tolist()),
             "cost": zip(self.remote.cost.xdata, self.remote.cost.ydata)
         }
-        logger.debug("{} send curves".format(self.remote.le2mclt))
+        logger.debug("{} send curves ({})".format(
+            self.remote.le2mclt, data_indiv.keys()))
         self.defered.callback(data_indiv)
         self.accept()
 
